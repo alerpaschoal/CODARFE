@@ -21,7 +21,7 @@ It cames with 4 formats  for distinc uses:
   * CODARFE class for pipeline integration
   * CODARFE python script for CMD call
 
-## what format should I use?
+## which format should I use?
 
 * If you are a Windows user or don't know the basics of programming, try "CODARFE for Windows"
 * If you know the basics of programming and wish to use the tool with small datasets (less than 100k predictors and 500 samples), use the notebook version.
