@@ -1,4 +1,4 @@
-# CODARFE Notebook (google colab version)
+# CODARFE Notebook (google colab version) Arrumar o codigo no colab pra predição
 This version is dedicated for users with low level of programming. You can simply download the CODARFE.ipynb file and upload it to your google drive account. Than you just need to open it as a Google Colab document and it is ready to go.
 
 ## How to use it
@@ -122,3 +122,10 @@ coda.Plot_Heatmap(path_out    = <path_to_folder>,
                   name_append = <filename>)
 ```
 If no filename is provided it will save in the *same directory as the metadata* with the name of 'HeatMap.png'
+
+## Predicting target variable for new samples
+
+bla bla bla
+```python
+coda.Predict(new)
+```
