@@ -3,9 +3,9 @@ This version is dedicated for users with low level of programming. You can simpl
 
 ## How to use it
 
-After you open the file in your google drive or any other notebook enviroment just follow the steps bellow:
+After you open the file in your google drive or any other notebook environment just follow the steps below:
 
-### Create a CODARFE instance or load one
+### 1) Create a CODARFE instance or load one
 
 Create the CODARFE instance by passing to it:
   1. The path to the **predictor** table (count table)  
@@ -20,7 +20,6 @@ Create the CODARFE instance by passing to it:
        -  .tsv (separated by tab)
   3. The name of the **target** variable as it is in the metadata table
 
-Example:  
 ```python
  coda = CODARFE(path2Data       = <path_to_predictor_table>,  
                 path2MetaData   = <path_to_metadata_table>,  
@@ -32,11 +31,14 @@ Example:
 If you already created an CODARFE instance and want to load it, you can just create an empty instance and load the file instace:
 
 ```python
+# Create a empty intance
 coda = CODARFE()
-# Then you can call the LoadInstance method
+# Then you can call the Load_Instance method
+coda.Load_Instance(path2instance = <path_to_file_instance.foda>)
+# The file is the one with the .foda extension 
 ```
 
-### Create the model
+### 2) Create the model
 
 You can create the model with all the default parameter by running:
 ```python
@@ -71,3 +73,52 @@ coda.CreateModel( write_results            = True,
 * *weightBIC:* Weight of the BIC metric in the model’s final score
 * *weightRMSE:* Weight of the RMSE metric in the model’s final score
 * *n_max_iter_huber:* Maximum number of iteration of the huber resgressor. HIGH IMPACT in the final result and computational time.
+  
+### 3) Save the Instance
+Just save the instance with the filename you want.  
+If no filename is provided it will save in the *same directory as the metadata* with the name of 'CODARFE_RESULTS.foda'
+
+```python
+coda.Save_Instance(name = <filename>)
+```
+
+## Creating graphics
+
+### Correlation Plot
+
+Display the correlation between the real target variable and the prediction of the own data.
+```python
+coda.Plot_Correlation(path_out    = <path_to_folder>,
+                      name_append = <filename>)
+```
+If no filename is provided it will save in the *same directory as the metadata* with the name of 'Correlation.png'
+
+### Hold Out Validation
+
+Display a box plot of the Hold out validation's mean absolute error.
+```python
+coda.Plot_HoldOut_Validation( n_repetitions = 100,
+                              test_size     = 0.2,
+                              path_out      = <path_to_folder>,
+                              name_append   = <filename>)
+```
+If no filename is provided it will save in the *same directory as the metadata* with the name of 'HoldOut_Validation.png'
+
+### Relevant Predictor Plot
+
+Display the most relevant predictors selected by CODARFE and its strength and direction of correlation.
+```python
+coda.Plot_Relevant_Predictors(n_max_features = 100,
+                              path_out       = <path_to_folder>,
+                              name_append    = <filename>)
+```
+If no filename is provided it will save in the *same directory as the metadata* with the name of 'HoldOut_Validation.png'
+
+### Heat Map
+
+Display a Heat map with the Center-Log-Ratio abundance of each predictor in relation to the target variable. The target variable is  sorted from largest to smallest from left to right.
+```python
+coda.Plot_Heatmap(path_out    = <path_to_folder>,
+                  name_append = <filename>)
+```
+If no filename is provided it will save in the *same directory as the metadata* with the name of 'HeatMap.png'
