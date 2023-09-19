@@ -11,7 +11,7 @@ Create the CODARFE instance by passing to it:
     - It can be the following format:
        - .csv (separated by comma)
        - .tsv (separated by tab)
-       - .biom (qiime2 format)
+       - .biom (**Bi**ological **O**bservation **M**atrix format)
        - .qza (qiime2 format compact)
   2. The path to the **metadata** table (where your target variable is)  
     - It can be the following format:
