@@ -98,7 +98,7 @@ coda.Plot_Correlation(path_out    = <path_to_folder>,
 Display a box plot of the Hold out validation's mean absolute error.
 ```python
 coda.Plot_HoldOut_Validation( n_repetitions = 100,
-                              test_size     = 0.2,
+                              test_size     = 20,
                               path_out      = <path_to_folder>,
                               name_append   = <filename>)
 ```
