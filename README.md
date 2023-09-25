@@ -7,6 +7,12 @@ For feature selection, it combines Recursive Feature Elimination in conjunction 
 
 CODARFE's main distinguishing feature is its capacity to **PREDICT** the target variable in new samples based on past data. It is accomplished via an imputation module that employs correlation in conjunction with compositional transformation.  
 
+
+![fluxoCODARFEsimples](https://github.com/MuriloCaminotto/CODARFE/assets/92797211/e3370d81-fa63-42b0-b168-9e0b3e7bdb0e)
+
+
+
+
 Some limitations and considerations:
   * The data MUST be compositional (e.g. count table).
   * The target variable MUST be continuous.
