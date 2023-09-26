@@ -106,7 +106,7 @@ class CODARFE():
     y = metadata[target_column_name]
 
     if len(data) == 0:
-      print('There is no correspondence between the ids of the predictors and the metadata.\nMake sure the column corresponding to the identifiers is first.')
+      print('There is no relationship between the predictor ids and the metadata. Ascertain that the first column corresponds to the identifiers.')
       sys.exit(1)
     print('Total samples with the target variable: ',totTotal-totNotNa,'/',totTotal)
 
@@ -397,11 +397,9 @@ class CODARFE():
     # adiciona '_' caso n tenha
     if name_append != '':
       if name_append[0]!= '_':
-        name_append = 'CODARFE_RESULTS_'+name_append
-    else:
-      name_append = 'CODARFE_RESULTS'
+        name_append = '_'+name_append
 
-    path2write = path_out +name_append+'.txt'
+    path2write = path_out+'CODARFE_RESULTS' +name_append+'.txt'
     print('Writing results at ',path2write)
 
     with open(path2write,'w') as f:
@@ -724,12 +722,14 @@ class CODARFE():
       
       if path_out != '':
         if path_out[-1]!= '/':
-          path_out+='/Prediction'
+          path_out+='/'
       else:
-        path_out = '/'.join(self.__path2MetaData.split('/')[:-1])+'/Prediction'
+        if type(self.__path2MetaData) != type(None):
+          path_out = '/'.join(self.__path2MetaData.split('/')[:-1])+'/'
+
       if name_append != '':
         name_append = '_'+name_append
-      filename = path_out+name_append+'.csv'
+      filename = path_out+'Prediction'+name_append+'.csv'
       pd.DataFrame(data = resp,columns = ['Prediction'],index=newindex).to_csv(filename)
 
     return resp,totalNotFound
@@ -785,10 +785,9 @@ class CODARFE():
     # adiciona '_' caso n tenha
     if name_append != '':
       if name_append[0]!= '_':
-        name_append = 'Correlation_'+name_append
-    else:
-      name_append = 'Correlation'
-    filename = path_out+name_append+'.png'
+        name_append = '_'+name_append
+
+    filename = path_out+'Correlation'+name_append+'.png'
 
     print('\nSaving the image at ',filename)
     plt.savefig(filename, dpi=600, bbox_inches='tight')
@@ -884,10 +883,9 @@ class CODARFE():
     # adiciona '_' caso n tenha
     if name_append != '':
       if name_append[0]!= '_':
-        name_append = 'HoldOut_Validation_'+name_append
-    else:
-      name_append = 'HoldOut_Validation'
-    filename = path_out+name_append+'.png'
+        name_append = '_'+name_append
+
+    filename = path_out+'HoldOut_Validation'+name_append+'.png'
 
     print('\nSaving the image at ',filename)
     plt.savefig(filename, dpi=600, bbox_inches='tight')
@@ -961,10 +959,9 @@ class CODARFE():
     # adiciona '_' caso n tenha
     if name_append != '':
       if name_append[0]!= '_':
-        name_append = 'Relevant_Predictors_'+name_append
-    else:
-      name_append = 'Relevant_Predictors_'
-    filename = path_out+name_append+'.png'
+        name_append = '_'+name_append
+  
+    filename = path_out+'Relevant_Predictors'+name_append+'.png'
 
 
     print('\nSaving the image at ',filename)
@@ -1087,10 +1084,9 @@ class CODARFE():
     # adiciona '_' caso n tenha
     if name_append != '':
       if name_append[0]!= '_':
-        name_append = 'HeatMap_'+name_append
-    else:
-      name_append = 'HeatMap'
-    filename = path_out+name_append+'.png'
+        name_append = '_'+name_append
+  
+    filename = path_out+'HeatMap'+name_append+'.png'
 
 
     print('\nSaving the image at ',filename)
