@@ -73,14 +73,17 @@ coda.Plot_Correlation()
 coda.Plot_HoldOut_Validation(n_repetitions = 100,
                              test_size=0.2)
 ```
+
 * **n_repetitions**: The number of Hold-Out repetitions (represented by the number of dots in the box plot).
 * **test_size**: The percentage of the dataset that is utilized in the test (for example, 20% uses 20).
+* 
 *Relevant predictors*
 
 ```python
 coda.Plot_Relevant_Predictors(n_max_features=100)
 ```
 * **n_max_features**: The maximum number of predictors to display.
+* 
 *Heat Map*
 
 ```python
