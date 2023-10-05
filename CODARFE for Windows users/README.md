@@ -143,5 +143,40 @@ The Windows operating system was used in the development of this version of CODA
 
 ## Predicting new samples
 
+* Select the *Predict new samples* button on the final screen.
+
+![1](https://github.com/MuriloCaminotto/CODARFE/assets/92797211/3e4c6e6d-c1a5-44e6-9bf5-207beb38a90e)
+
+* Browse in and select the new samples database.
+
+![2](https://github.com/MuriloCaminotto/CODARFE/assets/92797211/d48bedc5-6f91-42df-afd1-664e7850fb9c)
+
+* If the data are in csv or tsv file format, you may need to select the column that matches the sample's id.
+* To do this, just select the column from the dropdown option.
+* The file will then be saved together with the model (*.foda) file after you click the "Save" button.
+
+![3](https://github.com/MuriloCaminotto/CODARFE/assets/92797211/86157b2b-792d-4dde-8820-e6e28e11a810)
+
+
 ## Loading existing model
+
+* Select the *Upload model* button in the opening scream.
+
+![1](https://github.com/MuriloCaminotto/CODARFE/assets/92797211/9cdee727-fe3b-44e6-b1ed-34c77e28b908)
+
+* Navigate to the model file (*.foda).
+
+![2](https://github.com/MuriloCaminotto/CODARFE/assets/92797211/3dc47517-4d49-4b04-b47f-1baa8755b73e)
+
+* The model (*.foda) file you want to open should be selected.
+* Select the "Open" button.
+
+
+![3](https://github.com/MuriloCaminotto/CODARFE/assets/92797211/64d16e9a-ff38-4f48-982d-22064fa286f6)
+
+* The model's results will be loaded when the final scream appears.
+
+![4](https://github.com/MuriloCaminotto/CODARFE/assets/92797211/de684126-8b51-424d-b29a-c460cc968a93)
+
+
 
