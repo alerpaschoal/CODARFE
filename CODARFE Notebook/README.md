@@ -4,6 +4,17 @@ This version is dedicated for users with a low level of programming. You can sim
 
 After you open the file in your google colab or any other notebook environment and run all the cells, just follow the steps below in a new cell:
 
+- [Create a CODARFE instance or load one](#Create-a-CODARFE-instance-or-load-one)
+- [Create the model](#Create-the-model)
+- [Save the Instance](#Save-the-Instance)
+- [Creating graphics](#Creating-graphics)
+  - [Correlation Plot](#Correlation-Plot)
+  - [Hold Out Validation](#Hold-Out-Validation)
+  - [Relevant Predictor Plot](#Relevant-Predictor-Plot)
+  - [Heat Map](#Heat-Map)
+- [Predicting target variable for new samples](#Predicting-target-variable-for-new-samples)
+
+  
 ### 1) Create a CODARFE instance or load one
 
 Create the CODARFE instance by passing to it:
