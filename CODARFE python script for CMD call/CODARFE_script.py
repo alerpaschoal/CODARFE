@@ -1,35 +1,3 @@
-from biom import load_table
-import zipfile
-import shutil
-import os
-from skbio.stats.composition import clr
-import pandas as pd
-import numpy as np
-import scipy.stats as stats
-import math
-import operator
-from sklearn.preprocessing import MinMaxScaler
-from sklearn.feature_selection import VarianceThreshold
-from sklearn.ensemble import RandomForestRegressor
-import sys
-from sklearn.linear_model import HuberRegressor
-from sklearn.model_selection import KFold
-from sklearn.model_selection import train_test_split
-import pickle as pk
-
-# Plots
-import matplotlib.pyplot as plt
-from scipy.stats import pearsonr
-import seaborn as sns
-from mpl_toolkits.axes_grid1 import make_axes_locatable
-import matplotlib.colors as colors
-from skbio.stats.ordination import ca
-
-# For scripts
-#import getopt
-import warnings
-warnings.filterwarnings("ignore")
-
 class CODARFE():
   def __init__(self,
                #X: pd.core.frame.DataFrame=None,
@@ -38,14 +6,17 @@ class CODARFE():
                path2MetaData = None,
                metaData_Target=None
                ):
-    self.__path2MetaData = path2MetaData
+    
     if path2Data != None and path2MetaData != None and metaData_Target != None:
+      self.metaData_Target = metaData_Target
       print("Loading data... It may take some minutes depending on the size of the data")
-      self.data, self.target = self.__Read_Data(path2Data,path2MetaData,metaData_Target)
+      self.data, self.target , self.metadata = self.__Read_Data(path2Data,path2MetaData,metaData_Target)
       self.__totalPredictorsInDatabase = len(self.data.columns)
+      self.__path2MetaData = path2MetaData
     else:
       self.data = None
       self.target = None
+      self.__path2MetaData = None
       # print('No complete data provided. Please use the function Load_Instance(<path_2_instance>) to load an already created CODARFE model.')
 
     self.__log_transform = None
@@ -59,6 +30,9 @@ class CODARFE():
     
     self.__correlation_list = {}
 
+  def get_path2metadata(self):
+    return self.__path2MetaData
+  
   def __Read_Data(self,path2Data,path2metadata,target_column_name):
 
     extension = path2Data.split('.')[-1]
@@ -92,7 +66,7 @@ class CODARFE():
     elif extension == 'tsv':
         metadata = pd.read_csv(path2metadata,sep='\t',encoding='latin1')
         metadata.set_index(list(metadata.columns)[0],inplace=True)
-
+    self.metadata = metadata
     totTotal = len(metadata)
     if target_column_name not in metadata.columns:
       print("The Target is not present in the metadata table!")
@@ -110,7 +84,7 @@ class CODARFE():
       sys.exit(1)
     print('Total samples with the target variable: ',totTotal-totNotNa,'/',totTotal)
 
-    return data,y
+    return data,y,metadata
 
   def Save_Instance(self,path_out,name_append = ''):
 
@@ -120,6 +94,9 @@ class CODARFE():
 
     obj = {'data':self.data,
            'target':self.target,
+           'metaData_Target':self.metaData_Target,
+           'metadata':self.metadata,
+           'path2MetaData':self.__path2MetaData,
            'log_transform': self.__log_transform,
            'min_target_log_transformed': self.__min_target_log_transformed,
            'max_target_log_transformed': self.__max_target_log_transformed,
@@ -129,11 +106,10 @@ class CODARFE():
            'model': self.__model,
            'n_max_iter_huber': self.__n_max_iter_huber,
            'correlation_list':self.__correlation_list}
-
-    if path_out == '':
-      path_out = self.__path2MetaData.split('/')[:-1]+'/'
-    elif path_out[-1]!='/':
-      path_out+='/'
+    if self.__path2MetaData.split('/')[:-1] != []:
+        path_out = '/'.join(self.__path2MetaData.split('/')[:-1])+'/'
+    # if path_out == '':
+    #   path_out = '/'.join(os.path.abspath(self.__path2MetaData).split('/')[:-1])+'/'
     if name_append!='':
       name_append = 'CODARFE_MODEL_'+name_append+'.foda'
     else:
@@ -142,7 +118,7 @@ class CODARFE():
     with open(name,'wb') as f:
       pk.dump(obj,f)
 
-    print('\n\nInstance saved at ',name+'.foda\n\n')
+    print('\n\nInstance saved at ',name+'\n\n')
 
   def Load_Instance(self,path2instance):
     with open(path2instance,'rb') as f:
@@ -150,6 +126,9 @@ class CODARFE():
 
     self.data = obj['data']
     self.target = obj['target']
+    self.metaData_Target = obj['metaData_Target']
+    self.metadata = obj['metadata']
+    self.__path2MetaData = obj['path2MetaData']
     self.__log_transform = obj['log_transform']
     self.__min_target_log_transformed = obj['min_target_log_transformed']
     self.__max_target_log_transformed = obj['max_target_log_transformed']
@@ -204,11 +183,16 @@ class CODARFE():
     return numeros_restaurados_log_inverse
 
   def __toCLR(self,df): # Transform to CLr
+    # aux = df.copy()
+    # cols = aux.columns
+    # aux+=0.0001 # Pseudo count
+    # aux = clr(aux)
+    # aux = pd.DataFrame(data=aux,columns=cols)
+    # return aux
+
     aux = df.copy()
-    cols = aux.columns
     aux+=0.0001 # Pseudo count
-    aux = clr(aux)
-    aux = pd.DataFrame(data=aux,columns=cols)
+    aux = aux.apply(lambda x: np.log(x/np.exp(np.log(x).mean())),axis=1)
     return aux
 
   def __calc_mse_model_centeredv2(self,pred,y,df_model): #pred é o valor predito  # df_model é o número de variáveis
@@ -275,21 +259,24 @@ class CODARFE():
     resultTable = pd.DataFrame(columns=['Atributos','R² adj','F-statistic','BIC','MSE-CV'])
     percentagedisplay = round(100 - (len(list(X_train.columns))/tot2display)*100)
     while len(X_train.columns) - n_cols_2_remove > n_cols_2_remove or len(X_train.columns) > 1:
+      #print('1')
       X = self.__toCLR(X_train)
-
+      #print('2')
       method.fit(X,y_train)
-
+      #print('3')
       pred = method.predict(X)
-
+      #print('4')
       Fprob = self.__calc_f_prob_centeredv2(pred,y_train,X)
-
+      #print('5')
       r2 = self.__calc_r_squared(pred,y_train)
+      #print('6')
       r2adj = self.__calc_rsquared_adj(X,r2)
-
+      #print('7')
       BIC = self.__calc_bic(pred,y_train,X)
 
       msecv_results = []
       #Adicionando etapa de validação cruzada
+      #print('8')
       kf = KFold(n_splits=n_Kfold_CV,shuffle=True,random_state=42)
 
       for train, test in kf.split(X):
@@ -340,7 +327,6 @@ class CODARFE():
       #print(percentagedisplay,'% done...\n')
     #Remove possiveis nan
     resultTable.dropna(inplace=True)
-    print('100% done!\n')
     # Retorna a tabela com os resultados
     return resultTable
 
@@ -393,14 +379,15 @@ class CODARFE():
       if path_out[-1]!= '/':
         path_out+='/'
     else:
-      path_out = '/'.join(self.__path2MetaData.split('/')[:-1])+'/'
+      if self.__path2MetaData.split('/')[:-1] != []:
+        path_out = '/'.join(self.__path2MetaData.split('/')[:-1])+'/'
     # adiciona '_' caso n tenha
     if name_append != '':
       if name_append[0]!= '_':
         name_append = '_'+name_append
 
     path2write = path_out+'CODARFE_RESULTS' +name_append+'.txt'
-    print('Writing results at ',path2write)
+    print('Writing results at ',path2write,'\n')
 
     with open(path2write,'w') as f:
       f.write('Results: \n\n')
@@ -411,7 +398,20 @@ class CODARFE():
       f.write('Total of taxa selected -> '+str(len(self.selected_taxa))+'. This value corresponds to '+str((len(self.selected_taxa)/len(self.data.columns))*100)+'% of the total observed\n\n')
       f.write('Selected taxa: \n\n')
       f.write(','.join(self.selected_taxa))
+    
+    method = HuberRegressor(epsilon = 2.0,alpha = 0.0003, max_iter = self.__n_max_iter_huber)
+    X = self.data[self.selected_taxa]
+    X = self.__toCLR(X)
+    y = self.target
+    resp = method.fit(X,y)
 
+    dfaux = pd.DataFrame(data={'Predictors':resp.feature_names_in_,'coefs':resp.coef_})
+    dfaux.sort_values(by='coefs',ascending=False,inplace=True,ignore_index=True)
+    
+    path2writeCoefs = path_out+'Predictors_weigths' +name_append+'.csv'
+    print("Writing predictors weights at ",path2writeCoefs,'\n')
+    dfaux.to_csv(path2writeCoefs,index=False)
+  
   def __DefineModel(self):
 
       self.__model = RandomForestRegressor(n_estimators = 160, criterion = 'poisson',random_state=42)
@@ -556,13 +556,16 @@ class CODARFE():
       print('No data was provided!\nPlease make sure to provide complete information or use the Load_Instance(<path_2_instance>) function to load an already created CODARFE model')
       return None
     
-    print('\n\nChecking model parameters...')
+    print('\n\nChecking model parameters...',end='')
     if not self.__checkModelParams(write_results,path_out,name_append,rLowVar,applyAbunRel,percentage_cols_2_remove,n_Kfold_CV,weightR2,weightProbF,weightBIC,weightRMSE,n_max_iter_huber):
       print('\nPlease, Re-run this function with the correct parameters.')
       return None
     
     if write_results and path_out=='':
-      print('\n\nWARNING!\n\nThe path out was not provided!\nThe model will be written at ',self.__path2MetaData)
+      nameout = '/'.join(self.__path2MetaData.split('/')[:-1])
+      if nameout == '':
+        nameout = 'this same folder'
+      print('\n\nWARNING!\n\nThe path out was not provided!\nThe model will be written at ',nameout)
     
     print('OK')
 
@@ -576,16 +579,19 @@ class CODARFE():
     if applyAbunRel:
       #transforma em abundância relativa
       self.data = self.__toAbunRel(self.data)
+      print('\n\nRelative abundance finished!\n\n')
 
     method = HuberRegressor(epsilon = 2.0,alpha = 0.0003, max_iter = n_max_iter_huber)
 
+    print("\n\nSTARTING RFE!\n\n")
+
     # Remove iterativamente atributos enquanto cria vários modelos
     resultTable = self.__superRFE(method,n_cols_2_remove,n_Kfold_CV)
-
+    print("\n\nFinished!\n\nSelecting best predictors...",end='')
     if len(resultTable)>0:
       # Calcula pontuação e seleciona o melhor modelo
       self.__scoreAndSelection(resultTable,weightR2,weightProbF,weightBIC,weightRMSE)
-
+      print("DONE! \n\n")
       self.__DefineModel()
 
       print('\nModel created!\n\n')
@@ -672,6 +678,8 @@ class CODARFE():
       print('\n\nCreating correlation list for imputation method. It may take a few minutes depending on the size of the original dataset, but it will be create only once.\n\n')
       self.__CreateCorrelationImputer()
       print('Correlation list created!\n\n')
+    else:
+      print('\n\nCorrelation list was alread created. Using the existent one!\n\n')
 
     data2predict = pd.DataFrame() # Cria um dataframe para colocar apenas os dados selecionados
     totalNotFound = 0
@@ -725,7 +733,8 @@ class CODARFE():
           path_out+='/'
       else:
         if type(self.__path2MetaData) != type(None):
-          path_out = '/'.join(self.__path2MetaData.split('/')[:-1])+'/'
+          if self.__path2MetaData.split('/')[:-1] != []:
+            path_out = '/'.join(self.__path2MetaData.split('/')[:-1])+'/'
 
       if name_append != '':
         name_append = '_'+name_append
@@ -733,6 +742,7 @@ class CODARFE():
       pd.DataFrame(data = resp,columns = ['Prediction'],index=newindex).to_csv(filename)
 
     return resp,totalNotFound
+
 
   def Plot_Correlation(self,path_out='',name_append=''):
     if self.__model == None:
@@ -764,6 +774,8 @@ class CODARFE():
     #Plota os pontos previsto por esperado
     plt.plot(pred, y, 'o')
 
+    rawData = pd.DataFrame({'Real':y,'Prediction':pred})
+
     # calcula o slop e intercept para uma regressão linear (plot da linha)
     m, b = np.polyfit(pred, y, 1)
 
@@ -781,16 +793,19 @@ class CODARFE():
       if path_out[-1]!= '/':
         path_out+='/'
     else:
-      path_out = '/'.join(self.__path2MetaData.split('/')[:-1])+'/'
+      if self.__path2MetaData.split('/')[:-1] != []:
+        path_out = '/'.join(self.__path2MetaData.split('/')[:-1])+'/'
     # adiciona '_' caso n tenha
     if name_append != '':
       if name_append[0]!= '_':
         name_append = '_'+name_append
 
-    filename = path_out+'Correlation'+name_append+'.png'
-
-    print('\nSaving the image at ',filename)
-    plt.savefig(filename, dpi=600, bbox_inches='tight')
+    filenameimg = path_out+'Correlation'+name_append+'.png'
+    filenameraw = path_out+'Correlation_raw_data'+name_append+'.csv'
+    print('\nSaving the image at ',filenameimg,'\n')
+    plt.savefig(filenameimg, dpi=600, bbox_inches='tight')
+    print('\nSaving the raw data at ',filenameraw,'\n')
+    rawData.to_csv(filenameraw)
 
   def __checkHoldOutParams(self,n_repetitions,test_size,path_out,name_append):
     if type(n_repetitions) != int:
@@ -879,7 +894,8 @@ class CODARFE():
       if path_out[-1]!= '/':
         path_out+='/'
     else:
-      path_out = '/'.join(self.__path2MetaData.split('/')[:-1])+'/'
+      if self.__path2MetaData.split('/')[:-1] != []:
+        path_out = '/'.join(self.__path2MetaData.split('/')[:-1])+'/'
     # adiciona '_' caso n tenha
     if name_append != '':
       if name_append[0]!= '_':
@@ -945,7 +961,9 @@ class CODARFE():
                 data=dfaux,
                 palette=colors,
                 )
-
+    
+    rawData = dfaux.copy()
+    
     ax.set_title('Strength of relevant predictors',fontweight='bold')
     ax.set(ylabel="Predictor name",
           xlabel="Coefficient weight")
@@ -955,17 +973,19 @@ class CODARFE():
       if path_out[-1]!= '/':
         path_out+='/'
     else:
-      path_out = '/'.join(self.__path2MetaData.split('/')[:-1])+'/'
+      if self.__path2MetaData.split('/')[:-1] != []:
+        path_out = '/'.join(self.__path2MetaData.split('/')[:-1])+'/'
     # adiciona '_' caso n tenha
     if name_append != '':
       if name_append[0]!= '_':
         name_append = '_'+name_append
   
-    filename = path_out+'Relevant_Predictors'+name_append+'.png'
-
-
-    print('\nSaving the image at ',filename)
-    plt.savefig(filename, dpi=600, bbox_inches='tight')
+    filenameimg = path_out+'Relevant_Predictors'+name_append+'.png'
+    filenameraw = path_out+'Relevant_Predictors_raw_data'+name_append+'.csv'
+    print('\nSaving the image at ',filenameimg,'\n')
+    plt.savefig(filenameimg, dpi=600, bbox_inches='tight')
+    print('\nSaving the raw data at ',filenameraw,'\n')
+    rawData.to_csv(filenameraw)
 
 
   # HEAT MAP (ps: eu n lembro de porra nenhuma de como eu criei isso... melhor n tentar otimizar nada)
@@ -1070,6 +1090,7 @@ class CODARFE():
     
     plt.figure()
     fig, ax = plt.subplots(figsize=(Largura,Altura))
+    HeatMap_raw_data = pd.DataFrame(columns=y,index=bacs,data=bac_clr)
 
     im, cbar = self.__heatmap(bac_clr, bacs, y, ax=ax, cmap="RdYlBu",norm = norm, cbarlabel="Center-Log-Ratio")
 
@@ -1080,59 +1101,71 @@ class CODARFE():
       if path_out[-1]!= '/':
         path_out+='/'
     else:
-      path_out = '/'.join(self.__path2MetaData.split('/')[:-1])+'/'
+      if self.__path2MetaData.split('/')[:-1] != []:
+        path_out = '/'.join(self.__path2MetaData.split('/')[:-1])+'/'
     # adiciona '_' caso n tenha
     if name_append != '':
       if name_append[0]!= '_':
         name_append = '_'+name_append
   
     filename = path_out+'HeatMap'+name_append+'.png'
-
-
+    filenameraw = path_out+'HeatMap_raw_data'+name_append+'.csv'
     print('\nSaving the image at ',filename)
 
-    plt.savefig(filename, dpi=600, bbox_inches='tight')
-
+    plt.savefig(filename,  bbox_inches='tight') #dpi=600, Removed because the image is huge! 
+    print('\nSaving the Heat Map raw data at ',filenameraw)
+    HeatMap_raw_data.to_csv(filenameraw)
 
 def getArguments():
   argumentList = sys.argv[1:]
   #print(argumentList)
   if '-h' in argumentList or '--Help' in argumentList:
-    print ("########## Help ##########\n")
+    print("########## NOTE ##########")
+    print("If you DO NOT PROVIDE a path out for an result (such as model or graphics) it will be created at the original metadata\'s folder.")
+    print("########## Help ##########\n")
     print('-h --Help: Display this Help.')
+    print('-nt --NumberOfThreads: Define the maximum number of threads. Default = cpu_counts -1')
     print('-d --Data: The name of the counting table data file.')
     print('-m --Metadata: The name of the target\'s metadata file.')
     print('-t --Target: The name of the metadata column that the Target variable corresponds to.')
-    print('-o --Output: The FOLDER\'s path, where ALL files will be saved.')
-    print('-na --NameAppend: To add a name to the model and results filenames.')
-    print('-p --Predict: The name of the data file containing new samples that the model will predict.The name of the data file containing new samples that the model will predict.The name of the data file containing new samples that the model will predict.The name of the data file containing new samples that the model will predict.')
-    print('\t-po --PredictionOutput: The path that is used when writing the prediction.')
-    print('\t-pna --PredictionNameAppend: The name that is added at the end of the predictions filename.')
-    print('\t-pra --ApplyRAforPrediction: Apply the transformation for relative abundance to the new samples. (Set as False/f/F if your data is already in relative abundance).')
+    print('-o --Output: The FOLDER\'s path, where ALL files will be saved. Default = metadata\'s folder')
+    print('-na --NameAppend: To add a name to the model and results filenames. Default = None')
+    print('-p --Predict: The name of the data file containing new samples that the model will predict.')
+    print('\t-po --PredictionOutput: The path that is used when writing the prediction. Default = metadata\'s folder')
+    print('\t-pna --PredictionNameAppend: The name that is added at the end of the predictions filename. Default = None')
+    print('\t-pra --ApplyRAforPrediction: Apply the transformation for relative abundance to the new samples. (Set as False/f/F if your data is already in relative abundance). Default = True')
+    print('-sm --SelectMetadata: Select the metadata based on RDA with the data used.')
+    print('\t-smnm --SelectMetadataNewMeta: The path to a new metadata file to be used instead of the used to create the model.')
+    print('\t-smpo --SelectMetadataOutput: The output path to save the metadata selected. Default = metadata\'s folder')
+    print('\t-smna --SelectMetadataNameAppend: The name to append in the end of the filename to save the metadata selected. Default = None')
     print('-l --LoadInstance: The name of the instance file for an existing CODARFE model (.foda file)')
-    print('\tSince it is saved in the Instace file, it is not necessary to use -d, -m, or -t when using -l.')
+    print('\tSince it is saved in the Instance file, it is not necessary to use -d, -m, or -t when using -l.')
     print('\n---------- MODEL PARAMETERS ----------\n')
-    print('-rlv --RemoveLowVar: Apply the low variance columns elimination. (For small datasets (less than 300 columns), set as False/f/F).')
-    print('-ra --RelativeAbundance: Apply the transformation for relative abundance. (Set as False/f/F if your data is already in relative abundance).')
-    print('-cr --PercentageColsToRemove: The number of columns to eliminate in each RFE iteration (for example, use 1 for 1%).')
-    print('-nf --NumberOfFolds: In the Cross-validation step, the number of folds.')
-    print('-hb --HuberRegression: The Huber regression\'s maximum number of iterations.')
-    print('-r2 --R2weight: Alter the R2\'s default weight in the RFE score.')
-    print('-pf --ProbFweight: Alter the Prob(F)\'s default weight in the RFE score.')
-    print('-rmse --RMSEweight: Alter the RFE score\'s default weighting of the RMSE.')
-    print('-bic --BICweight: Alter the default weight of the BIC in the RFE score.')
+    print('-rlv --RemoveLowVar: Apply the low variance columns elimination. (For small datasets (less than 300 columns), set as False/f/F). Default = True')
+    print('-ra --RelativeAbundance: Apply the transformation for relative abundance. (Set as False/f/F if your data is already in relative abundance). Default = True')
+    print('-cr --PercentageColsToRemove: The number of columns to eliminate in each RFE iteration (for example, use 1 for 1%). Default = 1')
+    print('-nf --NumberOfFolds: In the Cross-validation step, the number of folds. Default = 10')
+    print('-hb --HuberRegression: The Huber regression\'s maximum number of iterations. Default = 100')
+    print('-r2 --R2weight: Alter the R2\'s default weight in the RFE score. Default = 1.0')
+    print('-pf --ProbFweight: Alter the Prob(F)\'s default weight in the RFE score. Default = 0.5')
+    print('-rmse --RMSEweight: Alter the RFE score\'s default weighting of the RMSE. Default = 1.5')
+    print('-bic --BICweight: Alter the default weight of the BIC in the RFE score. Default = 1.0')
     print('\n---------- PLOTS ----------\n')
     print('-pc --PlotCorrelation: Create a correlation plot with the generalized Vs target and save it.')
-    print('\t-pcna --PlotCorrelationNameAppend: The name to put to the end of the plot\'s filename..')
+    print('-pco --PlotCorrelationPathOut: The path that is used when saving the Correlation Plot. Default = metadata\'s folder')
+    print('\t-pcna --PlotCorrelationNameAppend: The name to put to the end of the plot\'s filename. Default = None')
     print('-ho --PlotHoldOut: Create and save the Hold-Out validation box-plot with the MAE.')
-    print('\t-horep --HoldOutRepetitions: The number of Hold-Out repetitions (represented by the number of dots in the box plot).')
-    print('\t-hots --HoldOutTestSize: The percentage of the dataset that is utilized in the test (for example, 20% uses 20).')
-    print('\t-hona --HoldOutNameAppend: The name to put to the end of the plot\'s filename.')
+    print('-hoo --PlotHoldOutPathOut: The path that is used when saving the Hold-out Plot. Default = metadata\'s folder')
+    print('\t-horep --HoldOutRepetitions: The number of Hold-Out repetitions (represented by the number of dots in the box plot). Default = 100')
+    print('\t-hots --HoldOutTestSize: The percentage of the dataset that is utilized in the test (for example, 20% uses 20). Default = 20')
+    print('\t-hona --HoldOutNameAppend: The name to put to the end of the plot\'s filename. Default = None')
     print('-hm --PlotHeatMap: Create and save a Heat-Map of the selected predictors\' CLR transformed abundance.')
-    print('\t-hmna --PlotHeatMapNameAppend: The name to put to the end of the plot\'s filename.')
+    print('-hmo --PlotHeatMapPathOut: The path that is used when saving the Heat Map. Default = metadata\'s folder')
+    print('\t-hmna --PlotHeatMapNameAppend: The name to put to the end of the plot\'s filename. Default = None')
     print('-rp --PlotRelevantPredictors: Create and save a bar plot containing the top -rpmax predictors, as well as their strengths and directions of correlation to the target.')
-    print('\t-rpmax --RelevantPredictorMaximum: In the -rp, pick the maximum number of predictors to display.')
-    print('\t-rpna --RelevantPredictorNameAppend: The name to put to the end of the plot\'s filename.')
+    print('-rpo --PlotRelevantPredictorsPathOut: The path that is used when saving the Relevant Predictors Plot. Default = metadata\'s folder')
+    print('\t-rpmax --RelevantPredictorMaximum: In the -rp, pick the maximum number of predictors to display. Default = 100')
+    print('\t-rpna --RelevantPredictorNameAppend: The name to put to the end of the plot\'s filename. Default = None')
     sys.exit(1)
 
   
@@ -1163,6 +1196,17 @@ def getArguments():
 
 def checkArguments(argdic):
   argsList = list(argdic.keys())
+  if '-nt' in argsList:
+    try :
+      argdic['-nt'] = int(argdic['-nt'])
+      if argdic['-nt']<=0:
+        print('Number of Threads MUST be positive non zero!')
+        sys.exit(1)
+    except:
+      print('Number of Threads MUST be integer!')
+      sys.exit(1)
+    
+      
   if '-o' in argsList and argdic['-o'] != '' and not os.path.exists(argdic['-o']):
     print('The output FOLDER does not exists!')
     sys.exit(1)
@@ -1239,7 +1283,7 @@ def checkArguments(argdic):
 
 
 def reduceArgs(argdict):  
-  reducerule = {'--Help':'-h','--Data':'-d','--Metadata':'-m','--Target':'-t','--Output':'-o','--Predict':'-p','--LoadInstance':'-l','--RemoveLowVar':'-rlv','--RelativeAbundance':'-ra','--R2weight':'-r2','--ProbFweight':'-pf','--RMSEweight':'-rmse','--BICweight':'-bic','--PlotCorrelation':'-pc','--PlotHoldOut':'-ho','--HoldOutRepetitions':'-horep','--HoldOutTestSize':'-hots','--PlotHeatMap':'-hm','--PlotRelevantPredictors':'-rp','--RelevantPredictorMaximum':'-rpmax','--PercentageColsToRemove':'-cr','--NumberOfFolds':'-nf','--ApplyRAforPrediction':'-pra','--PredictionOutput':'-po','--NameAppend':'-na','--PredictionNameAppend':'-pna','--PlotCorrelationNameAppend':'-pcna','--HoldOutNameAppend':'-hona','--PlotHeatMapNameAppend':'-hmna','--RelevantPredictorNameAppend':'-rpna'}
+  reducerule = {'--Help':'-h','--Data':'-d','--Metadata':'-m','--Target':'-t','--Output':'-o','--Predict':'-p','--LoadInstance':'-l','--RemoveLowVar':'-rlv','--RelativeAbundance':'-ra','--R2weight':'-r2','--ProbFweight':'-pf','--RMSEweight':'-rmse','--BICweight':'-bic','--PlotCorrelation':'-pc','--PlotHoldOut':'-ho','--HoldOutRepetitions':'-horep','--HoldOutTestSize':'-hots','--PlotHeatMap':'-hm','--PlotRelevantPredictors':'-rp','--RelevantPredictorMaximum':'-rpmax','--PercentageColsToRemove':'-cr','--NumberOfFolds':'-nf','--ApplyRAforPrediction':'-pra','--PredictionOutput':'-po','--NameAppend':'-na','--PredictionNameAppend':'-pna','--PlotCorrelationNameAppend':'-pcna','--HoldOutNameAppend':'-hona','--PlotHeatMapNameAppend':'-hmna','--RelevantPredictorNameAppend':'-rpna','--NumberOfThreads':'-nt','--PlotRelevantPredictorsPathOut':'-rpo','--PlotHeatMapPathOut':'-hmo','--PlotHoldOutPathOut':'-hoo','--PlotCorrelationPathOut':'-pco'}
   reduced = {}
   for key in argdict.keys():
     if key in reducerule.keys():
@@ -1248,23 +1292,30 @@ def reduceArgs(argdict):
       reduced[key] = argdict[key]
   return reduced
 
-def main():
 
+
+def get_args():
   argdict = reduceArgs(getArguments())
-  print(argdict)
+  #print(argdict)
   checkArguments(argdict)
   
   argsList = list(argdict.keys())
-  print('argsList -> ',argsList)
+  #print('argsList -> ',argsList)
   if '-o' in argsList:
     path_out = argdict['-o']
   else:
-    print('\nnNo output FOLDER provided! ALL files will be create in the current folder!\nn')
-    path_out = os.getcwd()
-  
+    path_out = ''
+  return argsList ,argdict , path_out
+
+
+def dotheRest(argsList ,argdict , path_out):
   if '-l' in argsList: 
     coda = CODARFE() 
     coda.Load_Instance(argdict['-l'])
+    if not ('-o' in argsList) and not (os.path.exists(coda.get_path2metadata())):
+      print('No output path was provided and the original metadata\'s folder does not exists anymore.')
+      print('Please, provide a new output path to save the files')
+      sys.exit(1)
   else:
     coda = CODARFE(path2Data=argdict['-d'],
                    path2MetaData=argdict['-m'],
@@ -1311,10 +1362,19 @@ def main():
                 path_out = argdict['-po'] if '-po' in list(argdict.keys()) else '',
                 name_append = argdict['-pna'] if '-pna' in list(argdict.keys()) else ''
                 )
+    if '-l' in argsList:
+      fullname = argdict['-l']
+      name_append = fullname.split('CODARFE_MODEL')[-1].split('.')[0]
+      if name_append != '' and name_append[0]=='_':
+        name_append = name_append[1:]
+      path_out = fullname.split('CODARFE_MODEL')[0]
+  
+    coda.Save_Instance(path_out    = path_out,
+                       name_append = name_append)
 
   if '-pc' in argsList:
     print('\n\nPlotting correlation...')
-    coda.Plot_Correlation(path_out = path_out,
+    coda.Plot_Correlation(path_out = argdict['-pco'] if '-pco' in list(argdict.keys()) else path_out,
                           name_append = argdict['-pcna'] if '-pcna' in list(argdict.keys()) else '')
     print('Done!\n\n')
 
@@ -1322,22 +1382,68 @@ def main():
     print('\n\nPlotting Hold out validation...')
     coda.Plot_HoldOut_Validation(n_repetitions = argdict['-horep'] if '-horep' in list(argdict.keys()) else 100,
                                  test_size = argdict['-hots'] if '-hots' in list(argdict.keys()) else 20,
-                                 path_out = path_out,
+                                 path_out = argdict['-hoo'] if '-hoo' in list(argdict.keys()) else path_out,
                                  name_append = argdict['-hona'] if '-hona' in list(argdict.keys()) else '')
     print('Done!\n\n')
 
   if '-hm' in argsList:
     print('\n\nPlotting Heat Map...')
-    coda.Plot_Heatmap(path_out=path_out,
+    coda.Plot_Heatmap(path_out = argdict['-hmo'] if '-hmo' in list(argdict.keys()) else path_out,
                       name_append = argdict['-hmna'] if '-hmna' in list(argdict.keys()) else '')
     print('Done!\n\n')
 
   if '-rp' in argsList:
     print('\n\nPlotting Relevant Predictors...')
     coda.Plot_Relevant_Predictors(n_max_features = argdict['-rpmax'] if '-rpmax' in list(argdict.keys()) else 100,
-                                  path_out=path_out,
+                                  path_out = argdict['-rpo'] if '-rpo' in list(argdict.keys()) else path_out,
                                   name_append = argdict['-rpna'] if '-rpna' in list(argdict.keys()) else '')
     print('Done!\n\n')
-main()
-#getArguments()
 
+#main()
+import os
+import sys
+
+argsList ,argdict , path_out = get_args() # Get all arguments
+
+if not (type(argsList) == type(None) or type(argdict) == type(None) or type(path_out) == type(None)):
+
+  # Load th rest of the libraryes
+  from threadpoolctl import threadpool_limits
+  from biom import load_table
+  import zipfile
+  import shutil
+
+  from skbio.stats.composition import clr
+  from skbio.stats.ordination import rda
+  import pandas as pd
+  import numpy as np
+  import scipy.stats as stats
+  import math
+  import operator
+  from sklearn.preprocessing import MinMaxScaler
+  from sklearn.feature_selection import VarianceThreshold
+  from sklearn.ensemble import RandomForestRegressor
+  from sklearn.linear_model import HuberRegressor
+  from sklearn.model_selection import KFold
+  from sklearn.model_selection import train_test_split
+  import pickle as pk
+
+  # Plots
+  import matplotlib.pyplot as plt
+  from scipy.stats import pearsonr
+  import seaborn as sns
+  from mpl_toolkits.axes_grid1 import make_axes_locatable
+  import matplotlib.colors as colors
+  from skbio.stats.ordination import ca
+
+  import warnings
+  warnings.filterwarnings("ignore")
+  # Check the number of threads
+  
+  limits = argdict['-nt'] if '-nt' in list(argdict.keys()) else os.cpu_count()-1
+  
+  with threadpool_limits(limits=limits, user_api='blas'):
+    dotheRest(argsList ,argdict , path_out)
+
+
+#with threadpool_limits(limits=2, user_api='blas')
