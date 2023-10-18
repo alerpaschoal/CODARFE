@@ -27,6 +27,7 @@ python3 CODARFE_scrit.py -l <CODARFE_instance.foda> -p <path_2_new_samples>
 
 **ALL PARAMETERS:**
 * **-h --Help**: Display this Help.
+* **-nt --NumberOfThreads**: Define the maximum number of threads. Default = cpu_counts -1
 * **-d --Data**: The name of the counting table data file.
 * **-m --Metadata**: The name of the target\'s metadata file.
 * **-t --Target**: The name of the metadata column that the Target variable corresponds to.
