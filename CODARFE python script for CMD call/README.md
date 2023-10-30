@@ -2,6 +2,13 @@
 
 ## Installing dependences
 *It is recommended that you build a virtual environment using Python 3.10.12 for this stage.*  
+```sh
+apt install python3.10-venv
+
+python3.10 -m venv codarfe
+
+source codarfe/bin/activate
+```
 
 After downloading the requirements.txt file, run the following command:
 ```sh
