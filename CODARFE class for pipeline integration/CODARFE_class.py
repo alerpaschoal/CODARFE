@@ -589,6 +589,15 @@ class CODARFE():
       print('MSE-CV -> ',     self.results['MSE-CV'])
       print('Total of taxa selected -> ',len(self.selected_taxa),'. This value corresponds to ',(len(self.selected_taxa)/self.__totalPredictorsInDatabase)*100,'% of the total.\n')
 
+      # Estou adicionando isso muitos meses apos ter feito o codigo... pra garantir que n vou quebrar nada, eu so re-treino o modelo e salvo os pesos
+      method = HuberRegressor(epsilon = 2.0,alpha = 0.0003, max_iter = self.__n_max_iter_huber)
+      X = self.data[self.selected_taxa]
+      X = self.__toCLR(X)
+      y = self.target
+      resp = method.fit(X,y)
+      self.weights = pd.DataFrame(data={'Predictors':resp.feature_names_in_,'weights':resp.coef_})
+      # ---------------------------------------------------------------------------------------------------------------------------------------------
+      
       if write_results:
         self.__write_results(path_out,name_append)
 
