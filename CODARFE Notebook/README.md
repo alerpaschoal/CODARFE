@@ -157,3 +157,4 @@ coda.Predict(path2newdata = <path_to_new_data>,
 * *applyAbunRel:* Flag to apply relative abundance transformation
 * *writeResults:* Flag to write the results
 * *path_out:* Filename of the output. If no filename is provided it will save in the *same directory as the metadata* with the name of  'Prediction.csv'
+* *name_append:* Name to concatenate in the final filename. (Use it to differentiate predictions from the same model)
