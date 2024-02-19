@@ -50,7 +50,7 @@ coda.Load_Instance(path2instance = <path_to_file_instance.foda>)
 
 ### 2) Create the model
 
-You can create the model with all the default parameter by running:
+You can create the model with all the default parameters by running:
 ```python
 coda.CreateModel()
 ```
@@ -73,7 +73,7 @@ coda.CreateModel( write_results            = True,
 ```
 * *write_results:* Defines if the results will be written. The results include the selected predictors and the metrics for its selection.
 * *path_out:* Where to write the results
-* *name_append:* The name of the file with the results
+* *name_append:* The name to append in the end of the file with the results
 * *rLowVar:* Flag to define if it is necessary to apply the removal of predictors with low variance. Set as False if less than 300 predictors.
 * *applyAbunRel:* Flag to define if it is necessary to apply the relative abundance transformation. Set as False if the data is already transformed
 * *percentage_cols_2_remove:* Percentage of the total predictors removed in each iteraction of the RFE. HIGH IMPACT in the final result and computational time.
@@ -86,7 +86,7 @@ coda.CreateModel( write_results            = True,
   
 ### 3) Save the Instance
 Just save the instance with the filename you want.  
-If no filename is provided it will save in the *same directory as the metadata* with the name of 'CODARFE_RESULTS.foda'
+If no filename is provided it will save in the *same directory as the metadata* with the name of 'CODARFE_MODEL.foda'
 
 ```python
 coda.Save_Instance(name = <filename>)
@@ -100,10 +100,10 @@ coda.Save_Instance(name = <filename>)
 Display the correlation between the real target variable and the prediction of the own data.
 ```python
 coda.Plot_Correlation(path_out    = <path_to_folder>,
-                      name_append = <filename>)
+                      name_append = <name>)
 ```
-* *path_out:* Filename of the output. If no filename is provided it will save in the *same directory as the metadata* with the name of 'Correlation.png'
-* *name_append:* Name to concatenate in the final filename. (Use it to differentiate plots with different parameters)
+* *path_out:* Path to folder where it will be saved. If no path is provided it will save in the *same directory as the metadata* with the name of 'Correlation.png'
+* *name_append:* Name to concatenate in the final filename.
 ### Hold Out Validation
 
 Display a box plot of the Hold out validation's mean absolute error.
@@ -111,20 +111,20 @@ Display a box plot of the Hold out validation's mean absolute error.
 coda.Plot_HoldOut_Validation( n_repetitions = 100,
                               test_size     = 20,
                               path_out      = <path_to_folder>,
-                              name_append   = <filename>)
+                              name_append   = <name>)
 ```
 * *n_repetitions:* Number of times will be performed an Hold-out.  (Number of dots in the final image)
 * *test_size:* Percentage of the total data that will be used as test during the Hold-out.
 * *path_out:* Filename of the output.If no filename is provided it will save in the *same directory as the metadata* with the name of 'HoldOut_Validation.png'
 * *name_append:* Name to concatenate in the final filename. (Use it to differentiate plots with different parameters)
 
-### Relevant Predictor Plot
+### Relevant Predictors Plot
 
 Display the most relevant predictors selected by CODARFE and its strength and direction of correlation.
 ```python
 coda.Plot_Relevant_Predictors(n_max_features = 100,
                               path_out       = <path_to_folder>,
-                              name_append    = <filename>)
+                              name_append    = <name>)
 ```
 * *n_max_features:* Maximum number of predictors to be displayed. (Will select the most important ones)
 * *path_out:* Filename of the output. If no filename is provided it will save in the *same directory as the metadata* with the name of 'HoldOut_Validation.png'
@@ -134,7 +134,7 @@ coda.Plot_Relevant_Predictors(n_max_features = 100,
 Display a Heat map with the Center-Log-Ratio abundance of each predictor in relation to the target variable. The target variable is  sorted from largest to smallest from left to right.
 ```python
 coda.Plot_Heatmap(path_out    = <path_to_folder>,
-                  name_append = <filename>)
+                  name_append = <name>)
 ```
 * *path_out:* Filename of the output. If no filename is provided it will save in the *same directory as the metadata* with the name of 'HeatMap.png'
 * *name_append:* Name to concatenate in the final filename. (Use it to differentiate plots with different parameters)
@@ -145,7 +145,8 @@ All you need to do is to call the predict function and pass to it the path to th
 coda.Predict(path2newdata = <path_to_new_data>,
              applyAbunRel = True,
              writeResults = True,
-             path_out = <path_out>)
+             path_out     = <path_out>
+             name_append  = <name>)
 ```
 * *path2newdata:* The path to the new data
     - It can be the following format:
