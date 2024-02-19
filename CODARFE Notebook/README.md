@@ -89,9 +89,11 @@ Just save the instance with the filename you want.
 If no filename is provided it will save in the *same directory as the metadata* with the name of 'CODARFE_MODEL.foda'
 
 ```python
-coda.Save_Instance(name = <filename>)
+coda.Save_Instance(path_out    = <path_to_folder>,
+                   name_append = <name>)
 ```
-* *name:* The complete filename for the instance to be saved.
+* *path_out:* Path to folder where it will be saved. If no path is provided it will save in the *same directory as the metadata* with the name of 'CODARFE_MODEL.png'
+* *name_append:* Name to concatenate in the final filename.
 
 ## Creating graphics
 
