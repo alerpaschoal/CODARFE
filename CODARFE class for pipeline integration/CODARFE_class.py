@@ -114,12 +114,25 @@ class CODARFE():
 
     return data,y
 
-  def Save_Instance(self,name):
+  def Save_Instance(self,path_out = "",name_append=''):
 
     if type(self.data) == type(None):
       print('Nothing to save.\n\nPlease when creating the CODARFE instance provide full data information: <path_2_Data> , <path_2_MetaData> and <metaData_Target>')
       return
 
+    if path_out != '':
+      if path_out[-1]!= '/':
+        path_out+='/'
+    else:
+      path_out = '/'.join(self.__path2MetaData.split('/')[:-1])+'/'
+    # adiciona '_' caso n tenha
+    if name_append != '':
+      if name_append[0]!= '_':
+        name_append = 'CODARFE_MODEL_'+name_append
+    else:
+      name_append = 'CODARFE_MODEL'
+    filename = path_out+name_append+'.foda'
+    
     obj = {'data':self.data,
            'target':self.target,
            'log_transform': self.__log_transform,
@@ -132,10 +145,10 @@ class CODARFE():
            'n_max_iter_huber': self.__n_max_iter_huber,
            'correlation_list':self.__correlation_list}
 
-    with open(name+'.foda','wb') as f:
+    with open(filename,'wb') as f:
       pk.dump(obj,f)
 
-    print('\n\nInstance saved at ',name+'.foda\n\n')
+    print('\n\nInstance saved at ',filename,'\n\n')
 
   def Load_Instance(self,path2instance):
     if not os.path.exists(path2instance):
@@ -697,18 +710,15 @@ class CODARFE():
     #   return resp,totalNotFound # Senão retorna como esta
 
     if writeResults:
-      
+
       if path_out != '':
         if path_out[-1]!= '/':
-          path_out+='/'
+          path_out+='/Prediction'
       else:
-        if type(self.__path2MetaData) != type(None):
-          if self.__path2MetaData.split('/')[:-1] != []:
-            path_out = '/'.join(self.__path2MetaData.split('/')[:-1])+'/'
-        
+        path_out = '/'.join(self.__path2MetaData.split('/')[:-1])+'/Prediction'
       if name_append != '':
         name_append = '_'+name_append
-      filename = path_out+'Prediction'+name_append+'.csv'
+      filename = path_out+name_append+'.csv'
       pd.DataFrame(data = resp,columns = ['Prediction'],index=newindex).to_csv(filename)
 
     return resp,totalNotFound
