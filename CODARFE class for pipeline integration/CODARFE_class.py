@@ -52,6 +52,7 @@ class CODARFE():
     self.results = None
     self.score_best_model = None
     self.selected_taxa = None
+    self.weights = None
     self.__model = None
     self.__n_max_iter_huber = None
 
@@ -143,7 +144,9 @@ class CODARFE():
            'selected_taxa': self.selected_taxa,
            'model': self.__model,
            'n_max_iter_huber': self.__n_max_iter_huber,
-           'correlation_list':self.__correlation_list}
+           'correlation_list':self.__correlation_list,
+           'weights':self.weights
+          }
 
     with open(filename,'wb') as f:
       pk.dump(obj,f)
@@ -169,6 +172,7 @@ class CODARFE():
     self.__model = obj['model']
     self.__n_max_iter_huber = obj['n_max_iter_huber']
     self.__correlation_list = obj['correlation_list']
+    self.weights = obj['weights']
 
     print('\n\nInstance restored successfully!\n\n')
 
