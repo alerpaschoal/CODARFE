@@ -191,7 +191,8 @@ class CODARFE():
     return data.apply(lambda x: x/x.sum() if x.sum()!=0 else x,axis=1)
 
   def __calc_new_redimension(self,target):
-    target = np.log2(target)# 1° transforma pra log2
+    target+=np.max(target) * 1e-10  
+    target = target.apply(lambda x: np.log2(abs(x)) * (-1 if x < 0 else 1))
 
     minimo = min(target)
     maximo = max(target)
