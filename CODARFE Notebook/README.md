@@ -32,7 +32,9 @@ Create the CODARFE instance by passing to it:
 
 ```python
  coda = CODARFE(path2Data       = <path_to_predictor_table>,  
-                path2MetaData   = <path_to_metadata_table>,  
+                flag_first_col_as_index_data = <use_first_col_as_index_for_data_table>
+                path2MetaData   = <path_to_metadata_table>,
+                flag_first_col_as_index_metaData = <use_first_col_as_index_for_metadata_table>
                 metaData_Target = <name_of_target_variable_in_matadata>)  
 ```
 
@@ -92,7 +94,7 @@ If no filename is provided it will save in the *same directory as the metadata* 
 coda.Save_Instance(path_out    = <path_to_folder>,
                    name_append = <name>)
 ```
-* *path_out:* Path to folder where it will be saved. If no path is provided it will save in the *same directory as the metadata* with the name of 'CODARFE_MODEL.png'
+* *path_out:* Path to folder where it will be saved. If no path is provided it will save in the *same directory as the metadata* with the name of 'CODARFE_MODEL.foda'
 * *name_append:* Name to concatenate in the final filename.
 
 ## Creating graphics
