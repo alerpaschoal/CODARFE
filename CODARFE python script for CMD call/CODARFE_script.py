@@ -1,4 +1,14 @@
 class CODARFE():
+  class ModelNotCreatedError(Exception):
+    def __init__(self, mensagem="No model created! Please create the model using the CreateModel function and try again."):
+            self.mensagem = mensagem
+            super().__init__(self.mensagem)
+
+  class EmptyDataError(Exception):
+    def __init__(self, mensagem="No model created! Please create the model using the CreateModel function and try again."):
+            self.mensagem = mensagem
+            super().__init__(self.mensagem)
+
   def __init__(self,
                #X: pd.core.frame.DataFrame=None,
                #y: pd.core.series.Series=None
@@ -34,6 +44,11 @@ class CODARFE():
     return self.__path2MetaData
   
   def __Read_Data(self,path2Data,path2metadata,target_column_name):
+    if not os.path.exists(path2Data):
+      print('The Data file does not exists!')
+      raise FileNotFoundError('The Data file does not exists!')
+    if not os.path.exists(path2metadata):
+      raise FileNotFoundError('The Metadata file does not exists!')
 
     extension = path2Data.split('.')[-1]
     if extension == 'csv':
@@ -80,8 +95,8 @@ class CODARFE():
     y = metadata[target_column_name]
 
     if len(data) == 0:
-      print('There is no relationship between the predictor ids and the metadata. Ascertain that the first column corresponds to the identifiers.')
-      sys.exit(1)
+      raise ValueError('There is no correspondence between the ids of the predictors and the metadata.\nMake sure the column corresponding to the identifiers is first.')
+
     print('Total samples with the target variable: ',totTotal-totNotNa,'/',totTotal)
 
     return data,y,metadata
@@ -89,8 +104,13 @@ class CODARFE():
   def Save_Instance(self,path_out,name_append = ''):
 
     if type(self.data) == type(None):
-      print('Nothing to save.\n\nPlease when creating the CODARFE instance provide full data information: <path_2_Data> , <path_2_MetaData> and <metaData_Target>')
+      print('Nothing to save.')
       return
+
+    if '/' in path_out:
+      path2 = '/'.join(path_out.split('/')[:-1])
+      if not os.path.exists(path2):
+        raise FileNotFoundError("The path out does not exists!")
 
     obj = {'data':self.data,
            'target':self.target,
@@ -121,6 +141,10 @@ class CODARFE():
     print('\n\nInstance saved at ',name+'\n\n')
 
   def Load_Instance(self,path2instance):
+
+    if not os.path.exists(path2instance):
+      raise FileNotFoundError(f"The file {path2instance} does not exists")
+
     with open(path2instance,'rb') as f:
       obj = pk.load(f)
 
@@ -282,11 +306,18 @@ class CODARFE():
 
       for train, test in kf.split(X):
 
-        model = method.fit(X.iloc[train],y_train[train])
+        if isinstance(y_train,pd.core.series.Series):
+          model = method.fit(X.iloc[train],y_train.iloc[train])
 
-        predcv = model.predict(X.iloc[test])
+          predcv = model.predict(X.iloc[test])
 
-        msecv_results.append(np.mean([(t-p)**2 for t,p in zip(y_train[test],predcv)])**(1/2))
+          msecv_results.append(np.mean([(t-p)**2 for t,p in zip(y_train.iloc[test],predcv)])**(1/2))
+        else:
+          model = method.fit(X.iloc[train],y_train[train])
+
+          predcv = model.predict(X.iloc[test])
+
+          msecv_results.append(np.mean([(t-p)**2 for t,p in zip(y_train[test],predcv)])**(1/2))
 
       msecv = np.mean(msecv_results)
 
@@ -428,6 +459,28 @@ class CODARFE():
         self.__model.fit(X,self.target) # Treina um segundo modelo com o alvo como é
         self.__log_transform = False # Define flag de transformação
 
+  def __check_boolean(self,value, name):
+      if not isinstance(value, bool):
+          raise ValueError(f"{name} must be a boolean.")
+
+  def __check_string(self,value, name):
+      if not isinstance(value, str):
+          raise ValueError(f"{name} must be a string.")
+
+  def __check_integer_range(self,value, name, min_value, max_value):
+      if value < min_value or value > max_value:
+          raise ValueError(f"{name} must be between {min_value} and {max_value}.")
+
+  def __check_integer(self,value, name):
+      if not isinstance(value, int):
+          raise ValueError(f"{name} must be an integer.")
+
+  def __check_non_negative_float(self,value, name):
+      if not isinstance(value, float):
+          raise ValueError(f"{name} must be a float.")
+      elif value < 0:
+          raise ValueError(f"{name} must be greater than or equal to 0.")
+
   def __checkModelParams(self,
                          write_results,
                          path_out,
@@ -441,102 +494,23 @@ class CODARFE():
                          weightBIC,
                          weightRMSE,
                          n_max_iter_huber):
-    if type(write_results) != bool:
-      print("\n\nWARNING!\n\nwrite_results MUST be True or False")
-      return False
-
-    if type(rLowVar) != bool:
-      print("\n\nWARNING!\n\nrLowVar MUST be True or False")
-      return False
-
-    if type(applyAbunRel) != bool:
-      print("\n\nWARNING!\n\napplyAbunRel MUST be True or False")
-      return False
-
-    if type(path_out) != str:
-      print("\n\nWARNING!\n\npath_out MUST be a String")
-      return False
-    
-    elif write_results and path_out!='' and not os.path.exists(path_out):
-      print('\n\nWARNING!\n\nThe path out does not exists!')
-      return False
-
-
-    if type(name_append) != str:
-      print("\n\nWARNING!\n\nname_append MUST be a String")
-      return False
-
-    try:
-      percentage_cols_2_remove = int(percentage_cols_2_remove)
-    except:
-      print('\n\nWARNING!\n\npercentage_cols_2_remove MUST be a integer')
-      return False
-
-    if percentage_cols_2_remove < 1 or percentage_cols_2_remove > 99:
-      print('\n\nWARNING!\n\npercentage_cols_2_remove MUST be between 1 and 99')
-      return False
-
-    try:
-      n_Kfold_CV = int(n_Kfold_CV)
-    except:
-      print('\n\nWARNING!\n\nn_Kfold_CV MUST be a integer')
-      return False
-
-    if n_Kfold_CV < 2 or n_Kfold_CV > 100:
-      print('\n\nWARNING!\n\nn_Kfold_CV MUST be between 2 and 99')
-      return False
-
-    try:
-      n_max_iter_huber = int(n_max_iter_huber)
-    except:
-      print('\n\nWARNING!\n\nn_max_iter_huber MUST be a integer')
-      return False
-
-    if n_max_iter_huber < 2:
-      print('\n\nWARNING!\n\nn_max_iter_huber MUST be greater than 2')
-      return False
-
-    try:
-      weightR2 = float(weightR2)
-    except:
-      print('\n\nWARNING!\n\nweightR2 MUST be a float')
-      return False
-
-    if weightR2 < 0:
-      print('\n\nWARNING!\n\nweightR2 MUST be greater or equal to 0')
-      return False
-
-    try:
-      weightProbF = float(weightProbF)
-    except:
-      print('\n\nWARNING!\n\nweightProbF MUST be a float')
-      return False
-
-    if weightProbF < 0:
-      print('\n\nWARNING!\n\nweightProbF MUST be greater or equal to 0')
-      return False
-
-    try:
-      weightBIC = float(weightBIC)
-    except:
-      print('\n\nWARNING!\n\nweightBIC MUST be a float')
-      return False
-
-    if weightBIC < 0:
-      print('\n\nWARNING!\n\nweightBIC MUST be greater or equal to 0')
-      return False
-
-    try:
-      weightRMSE = float(weightRMSE)
-    except:
-      print('\n\nWARNING!\n\nweightRMSE MUST be a float')
-      return False
-
-    if weightRMSE < 0:
-      print('\n\nWARNING!\n\nweightRMSE MUST be greater or equal to 0')
-      return False
-
-    return True
+      self.__check_boolean(write_results, "write_results")
+      self.__check_boolean(rLowVar, "rLowVar")
+      self.__check_boolean(applyAbunRel, "applyAbunRel")
+      self.__check_string(path_out, "path_out")
+      if write_results and path_out != '' and not os.path.exists(path_out):
+          raise FileNotFoundError("The path out does not exist!")
+      self.__check_string(name_append, "name_append")
+      self.__check_integer(percentage_cols_2_remove, "percentage_cols_2_remove")
+      self.__check_integer_range(percentage_cols_2_remove, "percentage_cols_2_remove", 1, 99)
+      self.__check_integer(n_Kfold_CV, "n_Kfold_CV")
+      self.__check_integer_range(n_Kfold_CV, "n_Kfold_CV", 2, 100)
+      self.__check_integer(n_max_iter_huber, "n_max_iter_huber")
+      self.__check_integer_range(n_max_iter_huber, "n_max_iter_huber", 2, 1000)
+      self.__check_non_negative_float(weightR2, "weightR2")
+      self.__check_non_negative_float(weightProbF, "weightProbF")
+      self.__check_non_negative_float(weightBIC, "weightBIC")
+      self.__check_non_negative_float(weightRMSE, "weightRMSE")
 
   def CreateModel(self,
                   write_results: bool =True,
@@ -556,11 +530,9 @@ class CODARFE():
     if type(self.data) == type(None):
       print('No data was provided!\nPlease make sure to provide complete information or use the Load_Instance(<path_2_instance>) function to load an already created CODARFE model')
       return None
-    
-    print('\n\nChecking model parameters...',end='')
-    if not self.__checkModelParams(write_results,path_out,name_append,rLowVar,applyAbunRel,percentage_cols_2_remove,n_Kfold_CV,weightR2,weightProbF,weightBIC,weightRMSE,n_max_iter_huber):
-      print('\nPlease, Re-run this function with the correct parameters.')
-      return None
+    print('\n\nChecking model parameters...',end="")
+    self.__checkModelParams(write_results,path_out,name_append,rLowVar,applyAbunRel,percentage_cols_2_remove,n_Kfold_CV,weightR2,weightProbF,weightBIC,weightRMSE,n_max_iter_huber)
+    print('OK')
     
     if write_results and path_out=='':
       nameout = '/'.join(self.__path2MetaData.split('/')[:-1])
@@ -665,12 +637,10 @@ class CODARFE():
               name_append = ''
               ):
     if self.__model == None:
-      print('No model created, please run the function CreateModel first.')
-      return None
+      raise self.ModelNotCreatedError()
 
-    if writeResults and path_out != '' and not os.path.exists(path_out):
-      print('\n\nThe path out does not exists!\nPlease try again with the correct path or let it blank to write in the same path as the metadata')
-      return None
+    if writeResults and ((path_out != '' and not os.path.exists(path_out)) or path_out == ''):
+      raise FileNotFoundError('\nThe path out does not exists or is empty.')
 
     new = self.__Read_new_Data(path2newdata)
     newindex = new.index
@@ -747,12 +717,10 @@ class CODARFE():
 
   def Plot_Correlation(self,path_out='',name_append=''):
     if self.__model == None:
-      print('No model created, please run the function CreateModel first.')
-      return None
+      raise self.ModelNotCreatedError()
 
     if path_out != '' and not os.path.exists(path_out):
-      print('\n\nThe path out does not exists!\nPlease try again with the correct path or let it blank to write in the same path as the metadata')
-      return None
+      raise FileNotFoundError("\nThe path out does not exists.\nPlease try again with the correct path or let it blank to write in the same path as the metadata")
 
     # Build a rectangle in axes coords
     left, width = .15, .75
@@ -809,22 +777,12 @@ class CODARFE():
     rawData.to_csv(filenameraw)
 
   def __checkHoldOutParams(self,n_repetitions,test_size,path_out,name_append):
-    if type(n_repetitions) != int:
-      print('\n\nWARNING!\n\nn_repetitions MUST be a integer!')
-      return False
-    elif n_repetitions < 2:
-      print('\n\nWARNING!\n\nn_repetitions MUST be at least 2!')
-      return False
-    if type(test_size) != int:
-      print('\n\nWARNING!\n\ntest_size MUST be a integer!')
-      return False
-    elif test_size<=0:
-      print('\n\nWARNING!\n\ntest_size MUST be greater than 0!')
-      return False
+    self.__check_integer(n_repetitions,"n_repetitions")
+    self.__check_integer_range(n_repetitions,"n_repetitions",2,1000)
+    self.__check_integer(test_size,"test_size")
+    self.__check_integer_range(test_size,"test_size",1,99)
     if path_out != '' and not os.path.exists(path_out):
-      print('\n\nWARNING!\n\nThe path out does not exists!\nPlease try again with the correct path or let it blank to write in the same path as the metadata')
-      return False
-    return True
+      raise FileNotFoundError("\nThe path out does not exists.\nPlease try again with the correct path or let it blank to write in the same path as the metadata")
 
   def Plot_HoldOut_Validation(self,
                               n_repetitions = 100,
@@ -832,11 +790,10 @@ class CODARFE():
                               path_out='',
                               name_append=''):
     if self.__model == None:
-      print('No model created, please run the function CreateModel first.')
-      return None
-    
-    if not self.__checkHoldOutParams(n_repetitions,test_size,path_out,name_append):
-      return None
+      raise self.ModelNotCreatedError()
+
+    self.__checkHoldOutParams(n_repetitions,test_size,path_out,name_append)
+
     test_size = test_size/100
     method = RandomForestRegressor(n_estimators = 160, criterion = 'poisson',random_state=42)
     X = self.data[self.selected_taxa]
@@ -914,17 +871,13 @@ class CODARFE():
                          name_append=''):
 
     if self.__model == None:
-      print('No model created, please run the function CreateModel first.')
-      return None
-    if type(n_max_features) != int:
-      print('\n\nWARNING!\n\nn_max_features MUST be a integer!')
-      return None
-    elif n_max_features<2:
-      print('\n\nWARNING!\n\nn_max_features MUST be at least 2!')
-      return None
+      raise self.ModelNotCreatedError()
+    self.__check_integer(n_max_features,"n_max_features")
+    self.__check_integer_range(n_max_features,"n_max_features",2,1000)
+
     if path_out != '' and not os.path.exists(path_out):
-      print('\n\nWARNING!\n\nThe path out does not exists!\nPlease try again with the correct path or let it blank to write in the same path as the metadata')
-      return None
+      raise FileNotFoundError("\nThe path out does not exists.\nPlease try again with the correct path or let it blank to write in the same path as the metadata")
+
     method = HuberRegressor(epsilon = 2.0,alpha = 0.0003, max_iter = self.__n_max_iter_huber)
     X = self.data[self.selected_taxa]
     X = self.__toCLR(X)
@@ -1045,11 +998,11 @@ class CODARFE():
                    name_append=''):
 
     if self.__model == None:
-      print('No model created, please run the function CreateModel first.')
-      return None
+      raise self.ModelNotCreatedError()
+
     if path_out != '' and not os.path.exists(path_out):
-      print('\n\nWARNING!\n\nThe path out does not exists!\nPlease try again with the correct path or let it blank to write in the same path as the metadata')
-      return None
+      raise FileNotFoundError("\nThe path out does not exists.\nPlease try again with the correct path or let it blank to write in the same path as the metadata")
+
     # Pega o dataframe original porem apenas o que foi selecioando
     selected_features = self.data[self.selected_taxa]
 
