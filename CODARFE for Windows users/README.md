@@ -7,6 +7,8 @@ The Windows operating system was used in the development of this version of CODA
 - If your target has negative numbers and low variations, it may cause problems during the prediction step. You can *shift* your target by adding the minimum value +1 to all samples, allowing the prediction.
 - The data and metadata **MUST NOT contain index as the first columns**.
 
+---
+
 * [Creating a model from scratch](#Creating-a-model-from-scratch)
 * [Ploting the results](#Ploting-the-results)
   - [Correlation Plot](#Correlation-Plot)
