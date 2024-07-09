@@ -136,12 +136,13 @@ class CODARFE():
     def __init__(self, mensagem="No model created! Please create the model using the CreateModel function and try again."):
             self.mensagem = mensagem
             super().__init__(self.mensagem)
+            
   def __init__(self,
                path2Data: Optional[str] = None,
-               flag_first_col_as_index_data: bool = False,
                path2MetaData: Optional[str] = None,
-               flag_first_col_as_index_metaData: bool = False,
-               metaData_Target: Optional[str] = None
+               metaData_Target: Optional[str] = None,
+               flag_first_col_as_index_data: bool = False,
+               flag_first_col_as_index_metaData: bool = False
                ) -> None:
     """
     Parameters
@@ -149,27 +150,34 @@ class CODARFE():
     path2Data: str = None
           The path to the microbiome dataframe (counting table)
     flag_first_col_as_index_data: bool = False
-          If True, the first row of the dataframe will be used as index
+          If True, the first column of the dataframe will be used as index
     path2MetaData: str = None
           The path to the metadata dataframe with the target variable
     flag_first_col_as_index_metaData: bool = False
-          If True, the first row of the dataframe will be used as index
+          If True, the first column of the dataframe will be used as index
     metaData_Target: str = None
           The name of the target variable column inside the metadata
     """
+    self.__flag_first_col_as_index_data = flag_first_col_as_index_data
+    self.__flag_first_col_as_index_metaData = flag_first_col_as_index_metaData
     self.__path2MetaData = path2MetaData
     if path2Data != None and path2MetaData != None and metaData_Target != None:
       print("Loading data... It may take some minutes depending on the size of the data")
-      self.data, self.target = self.__Read_Data(path2Data,path2MetaData,metaData_Target,flag_first_col_as_index_data,flag_first_col_as_index_metaData)
+      self.data, self.target = self.__Read_Data(path2Data,path2MetaData,metaData_Target)
       self.__totalPredictorsInDatabase = len(self.data.columns)
+      print("CODARFE instance created successfully")
     else:
       self.data = None
       self.target = None
+      print("New empty instance created")
       # print('No complete data provided. Please use the function Load_Instance(<path_2_instance>) to load an already created CODARFE model.')
 
-    self.__log_transform = None
-    self.__min_target_log_transformed = None
-    self.__max_target_log_transformed = None
+    self.__sqrt_transform = None
+    self.__transform = None
+    self.__min_target_sqrt_transformed = None
+    self.__max_target_sqrt_transformed = None
+    self.__min_target_transformed = None
+    self.__max_target_transformed = None
     self.results = None
     self.score_best_model = None
     self.selected_taxa = None
@@ -189,10 +197,12 @@ class CODARFE():
     extension = path2Data.split('.')[-1]
     if extension == 'csv':
         data = pd.read_csv(path2Data,encoding='latin1')
-        data.set_index(list(data.columns)[0],inplace=True)
+        if self.__flag_first_col_as_index_data:
+          data.set_index(list(data.columns)[0],inplace=True)
     elif extension == 'tsv':
         data = pd.read_csv(path2Data,sep='\t',encoding='latin1')
-        data.set_index(list(data.columns)[0],inplace=True)
+        if self.__flag_first_col_as_index_data:
+          data.set_index(list(data.columns)[0],inplace=True)
     elif extension == 'biom':
         table = load_table(path2Data)
         data = table.to_dataframe()
@@ -213,10 +223,12 @@ class CODARFE():
     extension = path2metadata.split('.')[-1]
     if extension == 'csv':
         metadata = pd.read_csv(path2metadata,encoding='latin1')
-        metadata.set_index(list(metadata.columns)[0],inplace=True)
+        if self.__flag_first_col_as_index_metaData:
+          metadata.set_index(list(metadata.columns)[0],inplace=True)
     elif extension == 'tsv':
         metadata = pd.read_csv(path2metadata,sep='\t',encoding='latin1')
-        metadata.set_index(list(metadata.columns)[0],inplace=True)
+        if self.__flag_first_col_as_index_metaData:
+          metadata.set_index(list(metadata.columns)[0],inplace=True)
 
     totTotal = len(metadata)
     totNotNa = metadata[target_column_name].isna().sum()
@@ -277,9 +289,12 @@ class CODARFE():
     
     obj = {'data':self.data,
            'target':self.target,
-           'log_transform': self.__log_transform,
-           'min_target_log_transformed': self.__min_target_log_transformed,
-           'max_target_log_transformed': self.__max_target_log_transformed,
+           'sqrt_transform': self.__sqrt_transform,
+           'transform': self.__transform,
+           'min_target_sqrt_transformed': self.__min_target_sqrt_transformed,
+           'max_target_sqrt_transformed': self.__max_target_sqrt_transformed,
+           'min_target_transformed': self.__min_target_transformed,
+           'max_target_transformed': self.__max_target_transformed,
            'results': self.results,
            'score_best_model': self.score_best_model,
            'selected_taxa': self.selected_taxa,
@@ -321,9 +336,12 @@ class CODARFE():
 
     self.data = obj['data']
     self.target = obj['target']
-    self.__log_transform = obj['log_transform']
-    self.__min_target_log_transformed = obj['min_target_log_transformed']
-    self.__max_target_log_transformed = obj['max_target_log_transformed']
+    self.__sqrt_transform = obj['sqrt_transform']
+    self.__transform = obj['transform']
+    self.__min_target_sqrt_transformed = obj['min_target_sqrt_transformed']
+    self.__max_target_sqrt_transformed = obj['max_target_sqrt_transformed']
+    self.__min_target_transformed = obj['min_target_transformed']
+    self.__max_target_transformed = obj['max_target_transformed']
     self.results = obj['results']
     self.score_best_model = obj['score_best_model']
     self.selected_taxa = obj['selected_taxa']
@@ -348,33 +366,52 @@ class CODARFE():
   def __toAbunRel(self,data):
     return data.apply(lambda x: x/x.sum() if x.sum()!=0 else x,axis=1)
 
+  # Shift the target to positive numbers only in case it has a CV <= 0.2 and negative numbers, so it can be used in the Poisson distribution (RF) 
   def __calc_new_redimension(self,target):
-    target+=np.max(target) * 1e-10  
-    target = target.apply(lambda x: np.log2(abs(x)) * (-1 if x < 0 else 1))
 
     minimo = min(target)
     maximo = max(target)
-    if self.__min_target_log_transformed == None or self.__max_target_log_transformed == None:
-      self.__min_target_log_transformed = minimo
-      self.__max_target_log_transformed = maximo
+    if self.__min_target_transformed == None or self.__max_target_transformed == None:
+      self.__min_target_transformed = minimo
+      self.__max_target_transformed = maximo
 
-    new_min = 0  # novo valor mínimo desejado
-    new_max = 100  # novo valor máximo desejado
-
-    numeros_redimensionados = [(x - minimo) / (maximo - minimo) * (new_max - new_min) + new_min for x in target]
+    numeros_redimensionados = [x + abs(self.__min_target_transformed)+1 for x in target]
     return numeros_redimensionados
 
   def __calc_inverse_redimension(self,predictions):
 
+    numeros_restaurados = [x - abs(self.__min_target_transformed)-1 for x in predictions]
+
+    return numeros_restaurados
+
+  # Uses sqrt to fllaten the target and shift it to 0-100 range in case the CV > 0.2. Helps the model to learn the distribution and solves negative numbers
+  def __calc_new_sqrt_redimension(self,target):
+    target = target.apply(lambda x: np.sqrt(abs(x)) * (-1 if x < 0 else 1))
+
+    minimo = min(target)
+    maximo = max(target)
+    if self.__min_target_sqrt_transformed == None or self.__max_target_sqrt_transformed == None:
+      self.__min_target_sqrt_transformed = minimo
+      self.__max_target_sqrt_transformed = maximo
+
+    new_min = 0  # novo valor mínimo desejado
+    new_max = 100  # novo valor máximo desejado
+    # numeros_redimensionados = [x + abs(self.__min_target_sqrt_transformed)+1 for x in target]
+    numeros_redimensionados = [(x - minimo) / (maximo - minimo) * (new_max - new_min) + new_min for x in target]
+    return numeros_redimensionados
+
+  def __calc_inverse_sqrt_redimension(self,predictions):
     new_min = 0  # novo valor mínimo usado na transformação
     new_max = 100  # novo valor máximo usado na transformação
 
-    minimo = self.__min_target_log_transformed
-    maximo = self.__max_target_log_transformed
+    minimo = self.__min_target_sqrt_transformed
+    maximo = self.__max_target_sqrt_transformed
 
     numeros_restaurados = [(x - new_min) / (new_max - new_min) * (maximo - minimo) + minimo for x in predictions]
-    numeros_restaurados_log_inverse = np.power(2, numeros_restaurados)
-    return numeros_restaurados_log_inverse
+
+    # numeros_restaurados = [x + abs(self.__min_target_sqrt_transformed)+1 for x in predictions]
+    numeros_restaurados_sqrt_inverse = [(x**2) * (-1 if x <0 else 1) for x in numeros_restaurados]
+    return numeros_restaurados_sqrt_inverse
 
   def __toCLR(self,df): # Transform to CLr
     aux = df.copy()
@@ -438,8 +475,10 @@ class CODARFE():
     # Define X inicial como descritores
     X_train = self.data
 
-    # Define variável alvo
-    if self.__log_transform:
+    # Defines the target, with the proper transformation
+    if self.__sqrt_transform:
+      y_train = np.array(self.__calc_new_sqrt_redimension(self.target))
+    elif self.__transform:
       y_train = np.array(self.__calc_new_redimension(self.target))
     else:
       y_train = self.target
@@ -595,20 +634,31 @@ class CODARFE():
       f.write('Selected taxa: \n\n')
       f.write(','.join(self.selected_taxa))
 
-  def __DefineModel(self):
+  def __DefineModel(self,allow_transform_high_variation):
 
       self.__model = RandomForestRegressor(n_estimators = 160, criterion = 'poisson',random_state=42)
       X = self.data[self.selected_taxa]
       X = self.__toCLR(X)
 
-      if np.std(self.target)/np.mean(self.target)>0.2:# Caso varie muitas vezes a média (ruido)
-        targetLogTransformed = self.__calc_new_redimension(self.target) # Aplica transformação no alvo
+      if allow_transform_high_variation and np.std(self.target)/np.mean(self.target)>0.2 :# Caso varie muitas vezes a média (ruido)
+        targetLogTransformed = self.__calc_new_sqrt_redimension(self.target) # Aplica transformação no alvo
         self.__model.fit(X,targetLogTransformed) # Treina com o alvo transformado
-        self.__log_transform = True # Define flag de transformação
-        #print('The target was log transformed!')
+        self.__sqrt_transform = True # Define flag de transformação
+        self.__transform = False
+
       else:
-        self.__model.fit(X,self.target) # Treina um segundo modelo com o alvo como é
-        self.__log_transform = False # Define flag de transformação
+        if any(t < 0 for t in self.target):
+          self.__transform = True
+          targetTranformed = self.__calc_new_redimension(self.target)
+          self.__model.fit(X,targetTranformed)
+          self.__sqrt_transform = False
+          print(f"The data was shifted {abs(self.__min_target_transformed)} + 1 units due to negative values not supported by poisson distribution.")
+
+        else:
+          self.__model.fit(X,self.target) # Treina um segundo modelo com o alvo como é
+          self.__sqrt_transform = False # Define flag de transformação
+          self.__transform = False
+  
 
   def __check_boolean(self,value, name):
       if not isinstance(value, bool):
@@ -638,6 +688,7 @@ class CODARFE():
                          name_append,
                          rLowVar,
                          applyAbunRel,
+                         allow_transform_high_variation,
                          percentage_cols_2_remove,
                          n_Kfold_CV,
                          weightR2,
@@ -648,6 +699,7 @@ class CODARFE():
       self.__check_boolean(write_results, "write_results")
       self.__check_boolean(rLowVar, "rLowVar")
       self.__check_boolean(applyAbunRel, "applyAbunRel")
+      self.__check_boolean(allow_transform_high_variation, "allow_transform_high_variation")
       self.__check_string(path_out, "path_out")
       if write_results and path_out != '' and not os.path.exists(path_out):
           raise FileNotFoundError("The path out does not exist!")
@@ -669,6 +721,7 @@ class CODARFE():
                   name_append: str ='',
                   rLowVar: bool =True,
                   applyAbunRel: bool = True,
+                  allow_transform_high_variation: bool = True,
                   percentage_cols_2_remove: int =1,
                   n_Kfold_CV: int=10,
                   weightR2: int =1.0,
@@ -691,6 +744,8 @@ class CODARFE():
                     Flag to define if it is necessary to apply the removal of predictors with low variance. Set as False if less than 300 predictors.
     applyAbunRel: bool = True
                     Flag to define if it is necessary to apply the relative abundance transformation. Set as False if the data is already transformed
+    allow_transform_high_variation: bool = True
+                    Flag to allow the target transformation in case it has a high variance.
     percentage_cols_2_remove: int = 1
                     Percentage of the total predictors removed in each iteraction of the RFE. HIGH IMPACT in the final result and computational time.
     n_Kfold_CV: int = 10
@@ -721,7 +776,7 @@ class CODARFE():
       print('No data was provided!\nPlease make sure to provide complete information or use the Load_Instance(<path_2_instance>) function to load an already created CODARFE model')
       return None
     print('\n\nChecking model parameters...',end="")
-    self.__checkModelParams(write_results,path_out,name_append,rLowVar,applyAbunRel,percentage_cols_2_remove,n_Kfold_CV,weightR2,weightProbF,weightBIC,weightRMSE,n_max_iter_huber)
+    self.__checkModelParams(write_results,path_out,name_append,rLowVar,applyAbunRel,allow_transform_high_variation,percentage_cols_2_remove,n_Kfold_CV,weightR2,weightProbF,weightBIC,weightRMSE,n_max_iter_huber)
     print('OK')
 
     n_cols_2_remove = percentage_cols_2_remove/100
@@ -744,7 +799,7 @@ class CODARFE():
       # Calcula pontuação e seleciona o melhor modelo
       self.__scoreAndSelection(resultTable,weightR2,weightProbF,weightBIC,weightRMSE)
 
-      self.__DefineModel()
+      self.__DefineModel(allow_transform_high_variation)
 
       print('\nModel created!\n\n')
       print('Results: \n\n')
@@ -794,10 +849,12 @@ class CODARFE():
     extension = path2Data.split('.')[-1]
     if extension == 'csv':
         data = pd.read_csv(path2Data,encoding='latin1')
-        data.set_index(list(data.columns)[0],inplace=True)
+        if self.__flag_first_col_as_index_data:
+          data.set_index(list(data.columns)[0],inplace=True)
     elif extension == 'tsv':
         data = pd.read_csv(path2Data,sep='\t',encoding='latin1')
-        data.set_index(list(data.columns)[0],inplace=True)
+        if self.__flag_first_col_as_index_data:
+          data.set_index(list(data.columns)[0],inplace=True)
     elif extension == 'biom':
         table = load_table(path2Data)
         data = table.to_dataframe()
@@ -861,7 +918,7 @@ class CODARFE():
     new = self.__Read_new_Data(path2newdata)
     newindex = new.index
     if self.__correlation_list == {}:
-      print('\n\nCreating correlation list for imputation method. It may take a few minutes depending on the size of the original dataset, but it will be create only once.\n\n')
+      print('\n\nCreating correlation list for imputation method. It may take a few minutes depending on the size of the original dataset, but it will be created only once.\n\n')
       self.__CreateCorrelationImputer()
       print('Correlation list created!\n\n')
 
@@ -905,10 +962,10 @@ class CODARFE():
 
     resp = self.__model.predict(data2predict)
 
-    if self.__log_transform: # Caso o modelo tenha sido treinado nos dados log transformados
-      resp = self.__calc_inverse_redimension(resp)#,totalNotFound # Retorna os valores restaurados ao original
-    # else:
-    #   return resp,totalNotFound # Senão retorna como esta
+    if self.__sqrt_transform: # Caso o modelo tenha sido treinado nos dados log transformados
+      resp = self.__calc_inverse_sqrt_redimension(resp)
+    if self.__transform:
+      resp = self.__calc_inverse_redimension(resp) # Retorna os valores restaurados ao original
 
     if writeResults:
 
@@ -962,8 +1019,11 @@ class CODARFE():
     X = self.__toCLR(X)
     pred = self.__model.predict(X)
 
-    if self.__log_transform: # Caso tenha aprendido com valores transformados
+    if self.__sqrt_transform: # Caso tenha aprendido com valores transformados
+      pred = self.__calc_inverse_sqrt_redimension(pred) # Destransforma-os
+    if self.__transform:
       pred = self.__calc_inverse_redimension(pred) # Destransforma-os
+
     plt.figure()
     plt.clf()
     ax = plt.gca()
@@ -1058,10 +1118,14 @@ class CODARFE():
     for i in range(n_repetitions):
       X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size) # divide em treino e teste
 
-      if self.__log_transform: # Caso tenha aprendido originalmente com valores transformados
-        method.fit(X_train,self.__calc_new_redimension(y_train)) # Re-treina com os valores transformados
+      if self.__sqrt_transform: # Caso tenha aprendido originalmente com valores transformados
+        method.fit(X_train,self.__calc_new_sqrt_redimension(y_train)) # Re-treina com os valores transformados
         y_pred = method.predict(X_test) # Realiza a predição
-        y_pred = self.__calc_inverse_redimension(y_pred) # Destransforma-os
+        y_pred = self.__calc_inverse_sqrt_redimension(y_pred) # Destransforma-os
+      elif self.__transform:
+        method.fit(X_train,self.__calc_new_redimension(y_train))
+        y_pred = method.predict(X_test)
+        y_pred = self.__calc_inverse_redimension(y_pred)
       else:
         method.fit(X_train,y_train)
         y_pred = method.predict(X_test)
