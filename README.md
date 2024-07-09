@@ -51,6 +51,7 @@ Codarfe needs only **3 inputs**:
 ## Some limitations and considerations:
   * The data MUST be compositional (e.g. count table).
   * The target variable MUST be continuous.
+  * Since the tool assumes the target is positive, any negative numbers will cause the target to shift (the predictions will be returned without the shift).
   * For prediction, additional samples SHOULD be gathered in the same manner as the data used for training (for further information, read the Results and Discussion sections from the original article)
   * We recommend not using the “low variance removal” (“r_low_var = TRUE”) for databases with a small number of predictors (e.g., less than 500).
   * Do not apply the relative abundance transformation if your database is already in relative abundance.
@@ -70,6 +71,17 @@ Codarfe needs only **3 inputs**:
 * If you want to utilize CODARFE in a CMD call, use the "CODARFE python script for CMD call". Check the tutorial inside the folder "CODARFE python script for CMD call" for the commands instructions.
 
 Inside each folder you will find a tutorial with examples of how to run CODARFE.
+
+# CODARFE was not able to generalize my data! What can I do?
+If you got the error about the data generalization or the $R^2$ is too low or the $\rho_{value}$ is not significant, don't panic (*yet*), there are some tricks you can try:
+
+* **1)** If you have less than 1k columns (you can push a little further if you have time) you can try setting the flag **rLowVar** to **False**. This will make the tool examine every single column. It will also make the tool run much slower, but it may find a better result, since it is looking more "carefully". (During the creation of the tool, we tested on a dataset with over 10k columns and 1k samples and it took a few hours to finish)
+* **2)** You can choose not to allow the target transformation (**allow_transform_high_variation** = **False**). In most cases, this transformation will help the model, but in some special cases, the raw target may yield a better result.
+* **3)** You can try to remove fewer predictors on each step of the RFE (**percentage_cols_2_remove** = **0.1**). This will make the tool run much slower, but like option 1, it will take a better look at the predictors.
+* **4)** You can increase the maximum iterations of the Huber regressor (**n_max_iter_huber** = **1000**). This may help during the predictor selection step, allowing the model to create a better fit on the data.
+* **5)** You can also combine multiple suggestions above. Just remember that combining options *1* and *3* may cause a **severe increase in runtime**.
+
+If after testing all the possibilities above the model is still yielding bad results, check if your target is appropriate for the tool. For example, if your target is between 0 and 1, it means that it is not appropriate for the methods used in this tool, and in this specific case, you may want to try applying a **logit** to your target **before** using the tool.
 
 # Bugs and errors?
 Because most of the packages are constantly updated, it is possible that it could affect the tool versions for non-Windows users. If you find any bugs or strange behavior, please report it to us through the email: murilobarbosa@alunos.utfpr.edu.br  
