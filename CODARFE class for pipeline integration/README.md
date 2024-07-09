@@ -69,18 +69,19 @@ coda.CreateModel()
 
 If you want to *change the model configuration*, this are all the parameters:
 ```python
-coda.CreateModel( write_results            = True,
-                  path_out                 = '',
-                  name_append              = '',
-                  rLowVar                  = True,
-                  applyAbunRel             = True,
-                  percentage_cols_2_remove = 1,
-                  n_Kfold_CV               = 10,
-                  weightR2                 = 1.0,
-                  weightProbF              = 0.5,
-                  weightBIC                = 1.0,
-                  weightRMSE               = 1.5,
-                  n_max_iter_huber         = 100
+coda.CreateModel( write_results                  = True,
+                  path_out                       = '',
+                  name_append                    = '',
+                  rLowVar                        = True,
+                  applyAbunRel                   = True,
+                  allow_transform_high_variation = True,
+                  percentage_cols_2_remove       = 1,
+                  n_Kfold_CV                     = 10,
+                  weightR2                       = 1.0,
+                  weightProbF                    = 0.5,
+                  weightBIC                      = 1.0,
+                  weightRMSE                     = 1.5,
+                  n_max_iter_huber               = 100
                 )
 ```
 * *write_results:* Defines if the results will be written. The results include the selected predictors and the metrics for its selection.
@@ -88,6 +89,7 @@ coda.CreateModel( write_results            = True,
 * *name_append:* The name to append in the end of the file with the results
 * *rLowVar:* Flag to define if it is necessary to apply the removal of predictors with low variance. Set as False if less than 300 predictors.
 * *applyAbunRel:* Flag to define if it is necessary to apply the relative abundance transformation. Set as False if the data is already transformed
+* *allow_transform_high_variation:* Flag to allow the target transformation in case it has a high variance.
 * *percentage_cols_2_remove:* Percentage of the total predictors removed in each iteraction of the RFE. HIGH IMPACT in the final result and computational time.
 * *n_Kfold_CV:* Number of folds in the Cross-validation step for the RMSE calculation. HIGH IMPACT in the final result and computational time.
 * *weightR2:* Weight of the R² metric in the model’s final score
