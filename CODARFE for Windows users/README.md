@@ -3,10 +3,9 @@
 The Windows operating system was used in the development of this version of CODARFE, which features a graphical user interface. For those who have had little to no experience with programming, this version is ideal. For each analysis you can perform using this interface, go to the instruction below.
 
 # Limitations
-- This version can generate results slitly different from the others due to some limitations during the code develompent. 
-- If your target has negative numbers and low variations it may cause problemns during the *prediction* step. You can *shift* your target by adding the minimum value +1 to all samples, allowing the prediction.
-- The data and metadata **MUST NOT contain index as first columns**
-- 
+- This version can generate results slightly different from the others due to some limitations during the code development.
+- If your target has negative numbers and low variations, it may cause problems during the prediction step. You can *shift* your target by adding the minimum value +1 to all samples, allowing the prediction.
+- The data and metadata **MUST NOT contain index as the first columns**.
 
 * [Creating a model from scratch](#Creating-a-model-from-scratch)
 * [Ploting the results](#Ploting-the-results)
