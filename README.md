@@ -7,7 +7,8 @@ For predictors selection, it combines Recursive Feature Elimination in conjuncti
 
 CODARFE's main distinguishing feature is its capacity to **PREDICT** the target variable in new samples based on past data. It is accomplished via an imputation module that employs correlation in conjunction with compositional transformation to solve the missing predictor problem and predict the target variable using a Random Forest model created through the predictors selected by the “predictors selection” step.  
 
-![githubImg](https://github.com/user-attachments/assets/57d8cb61-2aae-4d87-9fcd-7a405455427f)
+![github](https://github.com/user-attachments/assets/4013a648-882f-4bde-8592-c3093a811293)
+
 
 
 
