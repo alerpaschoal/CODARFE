@@ -184,6 +184,7 @@ class CODARFE():
     self.weights = None
     self.__model = None
     self.__n_max_iter_huber = None
+    self.__applyAbunRel = True
 
     self.__correlation_list = {}
 
@@ -473,7 +474,10 @@ class CODARFE():
     n_cols_2_remove = max([int(len(self.data.columns)*n_cols_2_remove),1])
 
     # Define X inicial como descritores
-    X_train = self.data
+    if self.__applyAbunRel:
+      X_train = self.__toAbunRel(self.data)
+    else:
+      X_train = self.data
 
     # Defines the target, with the proper transformation
     if self.__sqrt_transform:
@@ -552,7 +556,10 @@ class CODARFE():
       atributos = atributos[:-n_cols_2_remove]
 
       # Remove atributos n selecionados
-      X_train = X_train[atributos]
+      if self.__applyAbunRel:
+        X_train = self.__toAbunRel(self.data[atributos])
+      else:
+        X_train = X_train[atributos]
 
       # Calculo da % para mostrar na tela
       percentagedisplay = round(len(self.data.columns) - (len(X_train.columns)/len(self.data.columns)))
@@ -638,6 +645,8 @@ class CODARFE():
 
       self.__model = RandomForestRegressor(n_estimators = 160, criterion = 'poisson',random_state=42)
       X = self.data[self.selected_taxa]
+      if self.__applyAbunRel:
+        X = self.__toAbunRel(X)
       X = self.__toCLR(X)
 
       if allow_transform_high_variation and np.std(self.target)/np.mean(self.target)>0.2 :# Caso varie muitas vezes a média (ruido)
@@ -788,7 +797,7 @@ class CODARFE():
 
     if applyAbunRel:
       #transforma em abundância relativa
-      self.data = self.__toAbunRel(self.data)
+      self.__applyAbunRel = True
 
     method = HuberRegressor(epsilon = 2.0,alpha = 0.0003, max_iter = n_max_iter_huber)
 
@@ -812,6 +821,8 @@ class CODARFE():
       # Estou adicionando isso muitos meses apos ter feito o codigo... pra garantir que n vou quebrar nada, eu so re-treino o modelo e salvo os pesos
       method = HuberRegressor(epsilon = 2.0,alpha = 0.0003, max_iter = self.__n_max_iter_huber)
       X = self.data[self.selected_taxa]
+      if self.__applyAbunRel:
+        X = self.__toAbunRel(X)
       X = self.__toCLR(X)
       y = self.target
       resp = method.fit(X,y)
@@ -1016,6 +1027,10 @@ class CODARFE():
     top = bottom + height
     y = self.target
     X = self.data[self.selected_taxa]
+
+    if self.__applyAbunRel:
+      X = self.__toAbunRel(X)
+
     X = self.__toCLR(X)
     pred = self.__model.predict(X)
 
@@ -1112,6 +1127,10 @@ class CODARFE():
     
     method = RandomForestRegressor(n_estimators = 160, criterion = 'poisson',random_state=42)
     X = self.data[self.selected_taxa]
+    
+    if self.__applyAbunRel:
+      X = self.__toAbunRel(X)
+
     X = self.__toCLR(X)
     y = self.target
     maes = []
@@ -1226,8 +1245,16 @@ class CODARFE():
 
     method = HuberRegressor(epsilon = 2.0,alpha = 0.0003, max_iter = self.__n_max_iter_huber)
     X = self.data[self.selected_taxa]
+    if self.__applyAbunRel:
+      X = self.__toAbunRel(X)
     X = self.__toCLR(X)
-    y = self.target
+    # y = self.target
+    if self.__sqrt_transform:
+      y = np.array(self.__calc_new_sqrt_redimension(self.target))
+    elif self.__transform:
+      y = np.array(self.__calc_new_redimension(self.target))
+    else:
+      y = self.target
     resp = method.fit(X,y)
 
     dfaux = pd.DataFrame(data={'features':resp.feature_names_in_,'coefs':resp.coef_})
@@ -1372,7 +1399,8 @@ class CODARFE():
 
     # Pega o dataframe original porem apenas o que foi selecioando
     selected_features = self.data[self.selected_taxa]
-
+    if self.__applyAbunRel:
+      selected_features = self.__toAbunRel(selected_features)
     # Clusterizando bacterias
     y = self.target
 
