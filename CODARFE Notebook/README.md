@@ -31,9 +31,9 @@ Create the CODARFE instance by passing to it:
   3. The name of the **target** variable as it is in the metadata table
 
 ```python
- coda = CODARFE(path2Data       = <path_to_predictor_table>,  
-                path2MetaData   = <path_to_metadata_table>,
-                metaData_Target = <name_of_target_variable_in_matadata>
+ coda = CODARFE(path_to_data       = <path_to_predictor_table>,  
+                path_to_metadata   = <path_to_metadata_table>,
+                target = <name_of_target_variable_in_matadata>
                 flag_first_col_as_index_data = <use_first_col_as_index_for_data_table>
                 flag_first_col_as_index_metaData = <use_first_col_as_index_for_metadata_table>
                 )  
@@ -55,25 +55,25 @@ coda.Load_Instance(path2instance = <path_to_file_instance.foda>)
 
 You can create the model with all the default parameters by running:
 ```python
-coda.CreateModel()
+coda.fit()
 ```
 
 If you want to *change the model configuration*, this are all the parameters:
 ```python
-coda.CreateModel( write_results                  = True,
-                  path_out                       = '',
-                  name_append                    = '',
-                  rLowVar                        = True,
-                  applyAbunRel                   = True,
-                  allow_transform_high_variation = True
-                  percentage_cols_2_remove       = 1,
-                  n_Kfold_CV                     = 10,
-                  weightR2                       = 1.0,
-                  weightProbF                    = 0.5,
-                  weightBIC                      = 1.0,
-                  weightRMSE                     = 1.5,
-                  n_max_iter_huber               = 100
-                )
+coda.fit( write_results                  = True,
+          path_out                       = '',
+          name_append                    = '',
+          rLowVar                        = True,
+          applyAbunRel                   = True,
+          allow_transform_high_variation = True
+          percentage_cols_2_remove       = 1,
+          n_Kfold_CV                     = 10,
+          weightR2                       = 1.0,
+          weightProbF                    = 0.5,
+          weightBIC                      = 1.0,
+          weightRMSE                     = 1.5,
+          n_max_iter_huber               = 100
+         )
 ```
 * *write_results:* Defines if the results will be written. The results include the selected predictors and the metrics for its selection.
 * *path_out:* Where to write the results
@@ -94,7 +94,7 @@ Just save the instance with the filename you want.
 If no filename is provided it will save in the *same directory as the metadata* with the name of 'CODARFE_MODEL.foda'
 
 ```python
-coda.Save_Instance(path_out    = <path_to_folder>,
+coda.save_instance(path_out    = <path_to_folder>,
                    name_append = <name>)
 ```
 * *path_out:* Path to folder where it will be saved. If no path is provided it will save in the *same directory as the metadata* with the name of 'CODARFE_MODEL.foda'
@@ -106,7 +106,7 @@ coda.Save_Instance(path_out    = <path_to_folder>,
 
 Display the correlation between the real target variable and the prediction of the own data.
 ```python
-coda.Plot_Correlation(path_out    = <path_to_folder>,
+coda.clot_correlation(path_out    = <path_to_folder>,
                       name_append = <name>)
 ```
 * *path_out:* Path to folder where it will be saved. If no path is provided it will save in the *same directory as the metadata* with the name of 'Correlation.png'
@@ -115,7 +115,7 @@ coda.Plot_Correlation(path_out    = <path_to_folder>,
 
 Display a box plot of the Hold out validation's mean absolute error.
 ```python
-coda.Plot_HoldOut_Validation( n_repetitions = 100,
+coda.plot_holdOut_validation( n_repetitions = 100,
                               test_size     = 20,
                               path_out      = <path_to_folder>,
                               name_append   = <name>)
@@ -129,7 +129,7 @@ coda.Plot_HoldOut_Validation( n_repetitions = 100,
 
 Display the most relevant predictors selected by CODARFE and its strength and direction of correlation.
 ```python
-coda.Plot_Relevant_Predictors(n_max_features = 100,
+coda.plot_relevant_predictors(n_max_features = 100,
                               path_out       = <path_to_folder>,
                               name_append    = <name>)
 ```
@@ -140,7 +140,7 @@ coda.Plot_Relevant_Predictors(n_max_features = 100,
 
 Display a Heat map with the Center-Log-Ratio abundance of each predictor in relation to the target variable. The target variable is  sorted from largest to smallest from left to right.
 ```python
-coda.Plot_Heatmap(path_out    = <path_to_folder>,
+coda.plot_heatmap(path_out    = <path_to_folder>,
                   name_append = <name>)
 ```
 * *path_out:* Filename of the output. If no filename is provided it will save in the *same directory as the metadata* with the name of 'HeatMap.png'
@@ -149,7 +149,7 @@ coda.Plot_Heatmap(path_out    = <path_to_folder>,
 
 All you need to do is to call the predict function and pass to it the path to the data and if it needs to be transformed in relative abundance.
 ```python
-coda.Predict(path2newdata = <path_to_new_data>,
+coda.predict(path2newdata = <path_to_new_data>,
              applyAbunRel = True,
              writeResults = True,
              path_out     = <path_out>
