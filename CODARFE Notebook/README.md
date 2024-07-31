@@ -106,7 +106,7 @@ coda.save_instance(path_out    = <path_to_folder>,
 
 Display the correlation between the real target variable and the prediction of the own data.
 ```python
-coda.clot_correlation(path_out    = <path_to_folder>,
+coda.plot_correlation(path_out    = <path_to_folder>,
                       name_append = <name>)
 ```
 * *path_out:* Path to folder where it will be saved. If no path is provided it will save in the *same directory as the metadata* with the name of 'Correlation.png'
