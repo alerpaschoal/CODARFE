@@ -47,7 +47,7 @@ If you already created an CODARFE instance and want to load it, you can just cre
 # Create a empty instance
 coda = CODARFE()
 # Then you can call the Load_Instance method
-coda.Load_Instance(path2instance = <path_to_file_instance.foda>)
+coda.load_instance(path2instance = <path_to_file_instance.foda>)
 # The file is the one with the .foda extension 
 ```
 
