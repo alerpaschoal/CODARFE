@@ -1,34 +1,34 @@
 class CODARFE():
   class ModelNotCreatedError(Exception):
-    def __init__(self, mensagem="No model created! Please create the model using the CreateModel function and try again."):
+    def __init__(self, mensagem="No model created! Please create the model using the fit function and try again."):
             self.mensagem = mensagem
             super().__init__(self.mensagem)
 
   class EmptyDataError(Exception):
-    def __init__(self, mensagem="No model created! Please create the model using the CreateModel function and try again."):
+    def __init__(self, mensagem="No model created! Please create the model using the fit function and try again."):
             self.mensagem = mensagem
             super().__init__(self.mensagem)
 
   def __init__(self,
-               path2Data: str = None,
-               path2MetaData: str = None,
-               metaData_Target: str = None,
+               path_to_data: str = None,
+               path_to_metadata: str = None,
+               target: str = None,
                flag_first_col_as_index_data: bool = False,
                flag_first_col_as_index_metaData: bool = False
                ):
     self.__flag_first_col_as_index_data = flag_first_col_as_index_data
     self.__flag_first_col_as_index_metaData = flag_first_col_as_index_metaData
-    if path2Data != None and path2MetaData != None and metaData_Target != None:
-      self.metaData_Target = metaData_Target
+    if path_to_data != None and path_to_metadata != None and target != None:
+      self.target = target
       print("Loading data... It may take some minutes depending on the size of the data")
-      self.data, self.target , self.metadata = self.__Read_Data(path2Data,path2MetaData,metaData_Target)
+      self.data, self.target , self.metadata = self.__read_data(path_to_data,path_to_metadata,target)
       self.__totalPredictorsInDatabase = len(self.data.columns)
-      self.__path2MetaData = path2MetaData
+      self.__path_to_metadata = path_to_metadata
     else:
       self.data = None
       self.target = None
-      self.__path2MetaData = None
-      # print('No complete data provided. Please use the function Load_Instance(<path_2_instance>) to load an already created CODARFE model.')
+      self.__path_to_metadata = None
+      # print('No complete data provided. Please use the function load_instance(<path_2_instance>) to load an already created CODARFE model.')
 
     self.__sqrt_transform = None
     self.__transform = None
@@ -45,32 +45,32 @@ class CODARFE():
     
     self.__correlation_list = {}
 
-  def get_path2metadata(self):
-    return self.__path2MetaData
+  def get_path_to_metadata(self):
+    return self.__path_to_metadata
   
-  def __Read_Data(self,path2Data,path2metadata,target_column_name):
-    if not os.path.exists(path2Data):
+  def __read_data(self,path_to_data,path_to_metadata,target_column_name):
+    if not os.path.exists(path_to_data):
       print('The Data file does not exists!')
       raise FileNotFoundError('The Data file does not exists!')
-    if not os.path.exists(path2metadata):
+    if not os.path.exists(path_to_metadata):
       raise FileNotFoundError('The Metadata file does not exists!')
 
-    extension = path2Data.split('.')[-1]
+    extension = path_to_data.split('.')[-1]
     if extension == 'csv':
-        data = pd.read_csv(path2Data,encoding='latin1')
+        data = pd.read_csv(path_to_data,encoding='latin1')
         if self.__flag_first_col_as_index_data:
           data.set_index(list(data.columns)[0],inplace=True)
     elif extension == 'tsv':
-        data = pd.read_csv(path2Data,sep='\t',encoding='latin1')
+        data = pd.read_csv(path_to_data,sep='\t',encoding='latin1')
         if self.__flag_first_col_as_index_data:
           data.set_index(list(data.columns)[0],inplace=True)
     elif extension == 'biom':
-        table = load_table(path2Data)
+        table = load_table(path_to_data)
         data = table.to_dataframe()
     elif extension == 'qza':
-        output_directory =  '/'.join(path2Data.split('/')[:-1])+'/QZA_EXTRACT_CODARFE_TEMP/'
+        output_directory =  '/'.join(path_to_data.split('/')[:-1])+'/QZA_EXTRACT_CODARFE_TEMP/'
         # Openning the .qza file as an zip file
-        with zipfile.ZipFile(path2Data, 'r') as zip_ref:
+        with zipfile.ZipFile(path_to_data, 'r') as zip_ref:
             # extracting all data to the output directory
             zip_ref.extractall(output_directory)
         # Getting the biom path file
@@ -81,13 +81,13 @@ class CODARFE():
 
         shutil.rmtree(output_directory) # remove the pathTree created
 
-    extension = path2metadata.split('.')[-1]
+    extension = path_to_metadata.split('.')[-1]
     if extension == 'csv':
-        metadata = pd.read_csv(path2metadata,encoding='latin1')
+        metadata = pd.read_csv(path_to_metadata,encoding='latin1')
         if self.__flag_first_col_as_index_metaData:
           metadata.set_index(list(metadata.columns)[0],inplace=True)
     elif extension == 'tsv':
-        metadata = pd.read_csv(path2metadata,sep='\t',encoding='latin1')
+        metadata = pd.read_csv(path_to_metadata,sep='\t',encoding='latin1')
         if self.__flag_first_col_as_index_metaData:
           metadata.set_index(list(metadata.columns)[0],inplace=True)
     self.metadata = metadata
@@ -110,7 +110,7 @@ class CODARFE():
 
     return data,y,metadata
 
-  def Save_Instance(self,path_out,name_append = ''):
+  def save_instance(self,path_out,name_append = ''):
 
     if type(self.data) == type(None):
       print('Nothing to save.')
@@ -123,9 +123,9 @@ class CODARFE():
 
     obj = {'data':self.data,
            'target':self.target,
-           'metaData_Target':self.metaData_Target,
+           'target':self.target,
            'metadata':self.metadata,
-           'path2MetaData':self.__path2MetaData,
+           'path_to_metadata':self.__path_to_metadata,
            'sqrt_transform': self.__sqrt_transform,
            'transform': self.__transform,
            'min_target_sqrt_transformed': self.__min_target_sqrt_transformed,
@@ -138,10 +138,10 @@ class CODARFE():
            'model': self.__model,
            'n_max_iter_huber': self.__n_max_iter_huber,
            'correlation_list':self.__correlation_list}
-    if self.__path2MetaData.split('/')[:-1] != []:
-        path_out = '/'.join(self.__path2MetaData.split('/')[:-1])+'/'
+    if self.__path_to_metadata.split('/')[:-1] != []:
+        path_out = '/'.join(self.__path_to_metadata.split('/')[:-1])+'/'
     # if path_out == '':
-    #   path_out = '/'.join(os.path.abspath(self.__path2MetaData).split('/')[:-1])+'/'
+    #   path_out = '/'.join(os.path.abspath(self.__path_to_metadata).split('/')[:-1])+'/'
     if name_append!='':
       name_append = 'CODARFE_MODEL_'+name_append+'.foda'
     else:
@@ -152,7 +152,7 @@ class CODARFE():
 
     print('\n\nInstance saved at ',name+'\n\n')
 
-  def Load_Instance(self,path2instance):
+  def load_instance(self,path2instance):
 
     if not os.path.exists(path2instance):
       raise FileNotFoundError(f"The file {path2instance} does not exists")
@@ -162,9 +162,9 @@ class CODARFE():
 
     self.data = obj['data']
     self.target = obj['target']
-    self.metaData_Target = obj['metaData_Target']
+    self.target = obj['target']
     self.metadata = obj['metadata']
-    self.__path2MetaData = obj['path2MetaData']
+    self.__path_to_metadata = obj['path_to_metadata']
     self.__sqrt_transform = obj['sqrt_transform']
     self.__transform = obj['transform']
     self.__min_target_sqrt_transformed = obj['min_target_sqrt_transformed']
@@ -181,7 +181,7 @@ class CODARFE():
     print('\n\nInstance restored successfully!\n\n')
 
 
-  def __removeLowVar(self):
+  def __remove_low_var(self):
     aux = self.data.copy()
     cols = aux.columns
     selector = VarianceThreshold(aux.var(axis=1).mean()/8)#8
@@ -191,7 +191,7 @@ class CODARFE():
     print('\nA total of ',totRemoved,' taxa were removed due to very low variance\n')
     self.data =  self.data[not_to_drop]
 
-  def __toAbunRel(self,data):
+  def __to_abun_rel(self,data):
     return data.apply(lambda x: x/x.sum() if x.sum()!=0 else x,axis=1)
 
   def __calc_new_redimension(self,target):
@@ -239,7 +239,7 @@ class CODARFE():
     numeros_restaurados_sqrt_inverse = [(x**2) * (-1 if x <0 else 1) for x in numeros_restaurados]
     return numeros_restaurados_sqrt_inverse
 
-  def __toCLR(self,df): # Transform to CLr
+  def __to_CLR(self,df): # Transform to CLr
 
     aux = df.copy()
     aux+=0.0001 # Pseudo count
@@ -293,13 +293,13 @@ class CODARFE():
     bic = -2*llf + np.log(nobs) * k_params
     return round(bic)
 
-  def __superRFE(self,method,n_cols_2_remove,n_Kfold_CV):
+  def __super_RFE(self,method,n_cols_2_remove,n_Kfold_CV):
     # Define o total de atributos a serem removidos por rodada
     n_cols_2_remove = max([int(len(self.data.columns)*n_cols_2_remove),1])
 
     # Define X inicial como descritores
     if self.__applyAbunRel:
-      X_train = self.__toAbunRel(self.data)
+      X_train = self.__to_abun_rel(self.data)
     else:
       X_train = self.data
     tot2display = len(list(X_train.columns))
@@ -315,7 +315,7 @@ class CODARFE():
     resultTable = pd.DataFrame(columns=['Atributos','R² adj','F-statistic','BIC','MSE-CV'])
     percentagedisplay = round(100 - (len(list(X_train.columns))/tot2display)*100)
     while len(X_train.columns) - n_cols_2_remove > n_cols_2_remove or len(X_train.columns) > 1:
-      X = self.__toCLR(X_train)
+      X = self.__to_CLR(X_train)
 
       method.fit(X,y_train)
 
@@ -383,7 +383,7 @@ class CODARFE():
 
       # Remove atributos n selecionados
       if self.__applyAbunRel:
-        X_train = self.__toAbunRel(self.data[atributos])
+        X_train = self.__to_abun_rel(self.data[atributos])
       else:
         X_train = X_train[atributos]
 
@@ -395,7 +395,7 @@ class CODARFE():
     # Retorna a tabela com os resultados
     return resultTable
 
-  def __scoreAndSelection(self,resultTable,weightR2,weightProbF,weightBIC,weightRMSE):
+  def __score_and_selection(self,resultTable,weightR2,weightProbF,weightBIC,weightRMSE):
     # Cria cópia da tabela original
     df_aux = resultTable.copy()
     df_aux.replace([np.inf, -np.inf], np.nan, inplace=True)
@@ -444,8 +444,8 @@ class CODARFE():
       if path_out[-1]!= '/':
         path_out+='/'
     else:
-      if self.__path2MetaData.split('/')[:-1] != []:
-        path_out = '/'.join(self.__path2MetaData.split('/')[:-1])+'/'
+      if self.__path_to_metadata.split('/')[:-1] != []:
+        path_out = '/'.join(self.__path_to_metadata.split('/')[:-1])+'/'
     # adiciona '_' caso n tenha
     if name_append != '':
       if name_append[0]!= '_':
@@ -467,11 +467,11 @@ class CODARFE():
     method = HuberRegressor(epsilon = 2.0,alpha = 0.0003, max_iter = self.__n_max_iter_huber)
     
     if self.__applyAbunRel:
-      X = self.__toAbunRel(X)
+      X = self.__to_abun_rel(X)
     else:
       X = self.data[self.selected_taxa]
     
-    X = self.__toCLR(X)
+    X = self.__to_CLR(X)
     y = self.target
     resp = method.fit(X,y)
 
@@ -482,13 +482,13 @@ class CODARFE():
     print("Writing predictors weights at ",path2writeCoefs,'\n')
     dfaux.to_csv(path2writeCoefs,index=False)
   
-  def __DefineModel(self,allow_transform_high_variation):
+  def __define_model(self,allow_transform_high_variation):
 
       self.__model = RandomForestRegressor(n_estimators = 160, criterion = 'poisson',random_state=42)
       X = self.data[self.selected_taxa]
       if self.__applyAbunRel:
-        X = self.__toAbunRel(X)
-      X = self.__toCLR(X)
+        X = self.__to_abun_rel(X)
+      X = self.__to_CLR(X)
 
       if allow_transform_high_variation and np.std(self.target)/np.mean(self.target)>0.2 :# Caso varie muitas vezes a média (ruido)
         targetLogTransformed = self.__calc_new_sqrt_redimension(self.target) # Aplica transformação no alvo
@@ -531,7 +531,7 @@ class CODARFE():
       elif value < 0:
           raise ValueError(f"{name} must be greater than or equal to 0.")
 
-  def __checkModelParams(self,
+  def __check_model_params(self,
                          write_results,
                          path_out,
                          name_append,
@@ -564,7 +564,7 @@ class CODARFE():
       self.__check_non_negative_float(weightBIC, "weightBIC")
       self.__check_non_negative_float(weightRMSE, "weightRMSE")
 
-  def CreateModel(self,
+  def fit(self,
                   write_results: bool =True,
                   path_out: str ='',
                   name_append: str ='',
@@ -581,14 +581,14 @@ class CODARFE():
 
 
     if type(self.data) == type(None):
-      print('No data was provided!\nPlease make sure to provide complete information or use the Load_Instance(<path_2_instance>) function to load an already created CODARFE model')
+      print('No data was provided!\nPlease make sure to provide complete information or use the load_instance(<path_2_instance>) function to load an already created CODARFE model')
       return None
     print('\n\nChecking model parameters...',end="")
-    self.__checkModelParams(write_results,path_out,name_append,rLowVar,applyAbunRel,allow_transform_high_variation,percentage_cols_2_remove,n_Kfold_CV,weightR2,weightProbF,weightBIC,weightRMSE,n_max_iter_huber)
+    self.__check_model_params(write_results,path_out,name_append,rLowVar,applyAbunRel,allow_transform_high_variation,percentage_cols_2_remove,n_Kfold_CV,weightR2,weightProbF,weightBIC,weightRMSE,n_max_iter_huber)
     print('OK')
     
     if write_results and path_out=='':
-      nameout = '/'.join(self.__path2MetaData.split('/')[:-1])
+      nameout = '/'.join(self.__path_to_metadata.split('/')[:-1])
       if nameout == '':
         nameout = 'this same folder'
       print('\n\nWARNING!\n\nThe path out was not provided!\nThe model will be written at ',nameout)
@@ -600,7 +600,7 @@ class CODARFE():
 
     if rLowVar:
       #Remove baixa variância
-      self.__removeLowVar()
+      self.__remove_low_var()
 
     if applyAbunRel:
       #transforma em abundância relativa
@@ -612,13 +612,13 @@ class CODARFE():
     print("\n\nSTARTING RFE!\n\n")
 
     # Remove iterativamente atributos enquanto cria vários modelos
-    resultTable = self.__superRFE(method,n_cols_2_remove,n_Kfold_CV)
+    resultTable = self.__super_RFE(method,n_cols_2_remove,n_Kfold_CV)
     print("\n\nFinished!\n\nSelecting best predictors...",end='')
     if len(resultTable)>0:
       # Calcula pontuação e seleciona o melhor modelo
-      self.__scoreAndSelection(resultTable,weightR2,weightProbF,weightBIC,weightRMSE)
+      self.__score_and_selection(resultTable,weightR2,weightProbF,weightBIC,weightRMSE)
       print("DONE! \n\n")
-      self.__DefineModel(allow_transform_high_variation)
+      self.__define_model(allow_transform_high_variation)
 
       print('\nModel created!\n\n')
       print('Results: \n\n')
@@ -642,9 +642,9 @@ class CODARFE():
                keepdims=True)).T * np.sqrt(
         np.sum(bm**2, axis=0, keepdims=True)))
 
-  def __CreateCorrelationImputer(self):
+  def __create_correlation_imputer(self):
     threshold = 0.6 # Considered as strong correlation
-    aux = self.__toCLR(self.data) # Remove composicionalidade usando CLR nos dados originais
+    aux = self.__to_CLR(self.data) # Remove composicionalidade usando CLR nos dados originais
 
     for selected in self.selected_taxa: # Para cada taxa selecionada
       self.__correlation_list[selected] = [] # Cria instancia para esta taxa selecionada
@@ -655,24 +655,24 @@ class CODARFE():
             self.__correlation_list[selected].append({'taxa':taxa,'corr':corr}) # Adiciona taxa correlacionada
       self.__correlation_list[selected].sort(reverse=True,key = lambda x: x['corr']) # Ordena pela correlação
 
-  def __Read_new_Data(self,path2Data):
+  def __read_new_data(self,path_to_data):
 
-    extension = path2Data.split('.')[-1]
+    extension = path_to_data.split('.')[-1]
     if extension == 'csv':
-        data = pd.read_csv(path2Data,encoding='latin1')
+        data = pd.read_csv(path_to_data,encoding='latin1')
         if self.__flag_first_col_as_index_data:
           data.set_index(list(data.columns)[0],inplace=True)
     elif extension == 'tsv':
-        data = pd.read_csv(path2Data,sep='\t',encoding='latin1')
+        data = pd.read_csv(path_to_data,sep='\t',encoding='latin1')
         if self.__flag_first_col_as_index_data:
           data.set_index(list(data.columns)[0],inplace=True)
     elif extension == 'biom':
-        table = load_table(path2Data)
+        table = load_table(path_to_data)
         data = table.to_dataframe()
     elif extension == 'qza':
-        output_directory =  '/'.join(path2Data.split('/')[:-1])+'/QZA_EXTRACT_CODARFE_TEMP/'
+        output_directory =  '/'.join(path_to_data.split('/')[:-1])+'/QZA_EXTRACT_CODARFE_TEMP/'
         # Openning the .qza file as an zip file
-        with zipfile.ZipFile(path2Data, 'r') as zip_ref:
+        with zipfile.ZipFile(path_to_data, 'r') as zip_ref:
             # extracting all data to the output directory
             zip_ref.extractall(output_directory)
         # Getting the biom path file
@@ -684,7 +684,7 @@ class CODARFE():
         shutil.rmtree(output_directory) # remove the pathTree created
     return data
 
-  def Predict(self,
+  def predict(self,
               path2newdata,
               applyAbunRel = True,
               writeResults = True,
@@ -698,19 +698,19 @@ class CODARFE():
       raise FileNotFoundError('\nThe path out does not exists or is empty.')
 
     if path_out == '':
-      if self.__path2MetaData.split('/')[:-1] == []:
+      if self.__path_to_metadata.split('/')[:-1] == []:
         path_out == "./"
         print(f"The prediction will be written at {os.path.abspath(os.getcwd())}")
       else:
-        path_out = '/'.join(self.__path2MetaData.split('/')[:-1])+'/'
+        path_out = '/'.join(self.__path_to_metadata.split('/')[:-1])+'/'
         print(f"The prediction will be written at: {path_out}")
 
-    new = self.__Read_new_Data(path2newdata)
+    new = self.__read_new_data(path2newdata)
     newindex = new.index
 
     if self.__correlation_list == {}:
       print('\n\nCreating correlation list for imputation method. It may take a few minutes depending on the size of the original dataset, but it will be create only once.\n\n')
-      self.__CreateCorrelationImputer()
+      self.__create_correlation_imputer()
       print('Correlation list created!\n\n')
     else:
       print('\n\nCorrelation list was alread created. Using the existent one!\n\n')
@@ -743,12 +743,12 @@ class CODARFE():
     data2predict = data2predict.fillna(0)
 
     if applyAbunRel:
-      data2predict = self.__toAbunRel(data2predict) # Transforma em abundancia relativa
+      data2predict = self.__to_abun_rel(data2predict) # Transforma em abundancia relativa
 
     # print('\n\n\nabundancia relativa \n\n\n')
     # print(data2predict.head())
 
-    data2predict = self.__toCLR(data2predict) # Transforma para CLR
+    data2predict = self.__to_CLR(data2predict) # Transforma para CLR
 
     # print('\n\n\nCLR \n\n\n')
     # print(data2predict.head())
@@ -767,9 +767,9 @@ class CODARFE():
         if path_out[-1]!= '/':
           path_out+='/'
       else:
-        if type(self.__path2MetaData) != type(None):
-          if self.__path2MetaData.split('/')[:-1] != []:
-            path_out = '/'.join(self.__path2MetaData.split('/')[:-1])+'/'
+        if type(self.__path_to_metadata) != type(None):
+          if self.__path_to_metadata.split('/')[:-1] != []:
+            path_out = '/'.join(self.__path_to_metadata.split('/')[:-1])+'/'
 
       if name_append != '':
         name_append = '_'+name_append
@@ -779,7 +779,7 @@ class CODARFE():
     return resp,totalNotFound
 
 
-  def Plot_Correlation(self,path_out='',name_append=''):
+  def plot_correlation(self,path_out='',name_append=''):
     if self.__model == None:
       raise self.ModelNotCreatedError()
 
@@ -795,9 +795,9 @@ class CODARFE():
     X = self.data[self.selected_taxa]
 
     if self.__applyAbunRel:
-      X = self.__toAbunRel(X)
+      X = self.__to_abun_rel(X)
 
-    X = self.__toCLR(X)
+    X = self.__to_CLR(X)
     pred = self.__model.predict(X)
     
     if self.__sqrt_transform: # Caso tenha aprendido com valores transformados
@@ -837,8 +837,8 @@ class CODARFE():
       if path_out[-1]!= '/':
         path_out+='/'
     else:
-      if self.__path2MetaData.split('/')[:-1] != []:
-        path_out = '/'.join(self.__path2MetaData.split('/')[:-1])+'/'
+      if self.__path_to_metadata.split('/')[:-1] != []:
+        path_out = '/'.join(self.__path_to_metadata.split('/')[:-1])+'/'
     # adiciona '_' caso n tenha
     if name_append != '':
       if name_append[0]!= '_':
@@ -851,7 +851,7 @@ class CODARFE():
     print('\nSaving the raw data at ',filenameraw,'\n')
     rawData.to_csv(filenameraw)
 
-  def __checkHoldOutParams(self,n_repetitions,test_size,path_out,name_append):
+  def __check_holdOut_params(self,n_repetitions,test_size,path_out,name_append):
     self.__check_integer(n_repetitions,"n_repetitions")
     self.__check_integer_range(n_repetitions,"n_repetitions",2,1000)
     self.__check_integer(test_size,"test_size")
@@ -859,7 +859,7 @@ class CODARFE():
     if path_out != '' and not os.path.exists(path_out):
       raise FileNotFoundError("\nThe path out does not exists.\nPlease try again with the correct path or let it blank to write in the same path as the metadata")
 
-  def Plot_HoldOut_Validation(self,
+  def plot_holdOut_validation(self,
                               n_repetitions = 100,
                               test_size=20,
                               path_out='',
@@ -867,14 +867,14 @@ class CODARFE():
     if self.__model == None:
       raise self.ModelNotCreatedError()
 
-    self.__checkHoldOutParams(n_repetitions,test_size,path_out,name_append)
+    self.__check_holdOut_params(n_repetitions,test_size,path_out,name_append)
 
     test_size = test_size/100
     method = RandomForestRegressor(n_estimators = 160, criterion = 'poisson',random_state=42)
     X = self.data[self.selected_taxa]
     if self.__applyAbunRel:
-      X = self.__toAbunRel(X)
-    X = self.__toCLR(X)
+      X = self.__to_abun_rel(X)
+    X = self.__to_CLR(X)
     y = self.target
     maes = []
     for i in range(n_repetitions):
@@ -933,8 +933,8 @@ class CODARFE():
       if path_out[-1]!= '/':
         path_out+='/'
     else:
-      if self.__path2MetaData.split('/')[:-1] != []:
-        path_out = '/'.join(self.__path2MetaData.split('/')[:-1])+'/'
+      if self.__path_to_metadata.split('/')[:-1] != []:
+        path_out = '/'.join(self.__path_to_metadata.split('/')[:-1])+'/'
     # adiciona '_' caso n tenha
     if name_append != '':
       if name_append[0]!= '_':
@@ -946,7 +946,7 @@ class CODARFE():
     plt.savefig(filename, dpi=600, bbox_inches='tight')
 
 
-  def Plot_Relevant_Predictors(self,
+  def plot_relevant_predictors(self,
                          n_max_features=100,
                          path_out='',
                          name_append=''):
@@ -962,8 +962,8 @@ class CODARFE():
     method = HuberRegressor(epsilon = 2.0,alpha = 0.0003, max_iter = self.__n_max_iter_huber)
     X = self.data[self.selected_taxa]
     if self.__applyAbunRel:
-      X = self.__toAbunRel(X)
-    X = self.__toCLR(X)
+      X = self.__to_abun_rel(X)
+    X = self.__to_CLR(X)
     # y = self.target
 
     if self.__sqrt_transform:
@@ -1018,8 +1018,8 @@ class CODARFE():
       if path_out[-1]!= '/':
         path_out+='/'
     else:
-      if self.__path2MetaData.split('/')[:-1] != []:
-        path_out = '/'.join(self.__path2MetaData.split('/')[:-1])+'/'
+      if self.__path_to_metadata.split('/')[:-1] != []:
+        path_out = '/'.join(self.__path_to_metadata.split('/')[:-1])+'/'
     # adiciona '_' caso n tenha
     if name_append != '':
       if name_append[0]!= '_':
@@ -1084,7 +1084,7 @@ class CODARFE():
 
     return im, cbar
 
-  def Plot_Heatmap(self,
+  def plot_heatmap(self,
                    path_out='',
                    name_append=''):
 
@@ -1097,7 +1097,7 @@ class CODARFE():
     # Pega o dataframe original porem apenas o que foi selecioando
     selected_features = self.data[self.selected_taxa]
     if self.__applyAbunRel:
-      selected_features = self.__toAbunRel(selected_features)
+      selected_features = self.__to_abun_rel(selected_features)
     # Clusterizando bacterias
     y = self.target
 
@@ -1147,8 +1147,8 @@ class CODARFE():
       if path_out[-1]!= '/':
         path_out+='/'
     else:
-      if self.__path2MetaData.split('/')[:-1] != []:
-        path_out = '/'.join(self.__path2MetaData.split('/')[:-1])+'/'
+      if self.__path_to_metadata.split('/')[:-1] != []:
+        path_out = '/'.join(self.__path_to_metadata.split('/')[:-1])+'/'
     # adiciona '_' caso n tenha
     if name_append != '':
       if name_append[0]!= '_':
@@ -1353,15 +1353,15 @@ def get_args():
 def dotheRest(argsList ,argdict , path_out):
   if '-l' in argsList: 
     coda = CODARFE() 
-    coda.Load_Instance(argdict['-l'])
-    if not ('-o' in argsList) and not (os.path.exists(coda.get_path2metadata())):
+    coda.load_instance(argdict['-l'])
+    if not ('-o' in argsList) and not (os.path.exists(coda.get_path_to_metadata())):
       print('No output path was provided and the original metadata\'s folder does not exists anymore.')
       print('Please, provide a new output path to save the files')
       sys.exit(1)
   else:
-    coda = CODARFE(path2Data=argdict['-d'],
-                   path2MetaData=argdict['-m'],
-                   metaData_Target=argdict['-t'])
+    coda = CODARFE(path_to_data=argdict['-d'],
+                   path_to_metadata=argdict['-m'],
+                   target=argdict['-t'])
   
   if type(coda.selected_taxa) == type(None):
     print('\n\nCREATING MODEL\n')
@@ -1378,7 +1378,7 @@ def dotheRest(argsList ,argdict , path_out):
     weightRMSE=argdict['-rmse'] if '-rmse' in list(argdict.keys()) else 1.5
     n_max_iter_huber=argdict['-hb'] if '-hb' in list(argdict.keys()) else 100
 
-    coda.CreateModel(write_results = write_results,
+    coda.fit(write_results = write_results,
                     path_out = path_out,
                     name_append = name_append,
                     rLowVar = rLowVar,
@@ -1391,14 +1391,14 @@ def dotheRest(argsList ,argdict , path_out):
                     weightRMSE = weightRMSE,
                     n_max_iter_huber = n_max_iter_huber)
     
-    coda.Save_Instance(path_out=path_out,
+    coda.save_instance(path_out=path_out,
                       name_append = name_append)
   else:
     print('\n\nModel Already Created. Skipping model creation!\n\n')
 
   if '-p' in argsList:
     print('\n\nPREDICTING\n')
-    coda.Predict(path2newdata = argdict['-p'] if '-p' in list(argdict.keys()) else '',
+    coda.predict(path2newdata = argdict['-p'] if '-p' in list(argdict.keys()) else '',
                 applyAbunRel = argdict['-pra'] if '-pra' in list(argdict.keys()) else True,
                 writeResults = True,
                 path_out = argdict['-po'] if '-po' in list(argdict.keys()) else '',
@@ -1411,18 +1411,18 @@ def dotheRest(argsList ,argdict , path_out):
         name_append = name_append[1:]
       path_out = fullname.split('CODARFE_MODEL')[0]
   
-    coda.Save_Instance(path_out    = path_out,
+    coda.save_instance(path_out    = path_out,
                        name_append = name_append)
 
   if '-pc' in argsList:
     print('\n\nPlotting correlation...')
-    coda.Plot_Correlation(path_out = argdict['-pco'] if '-pco' in list(argdict.keys()) else path_out,
+    coda.plot_correlation(path_out = argdict['-pco'] if '-pco' in list(argdict.keys()) else path_out,
                           name_append = argdict['-pcna'] if '-pcna' in list(argdict.keys()) else '')
     print('Done!\n\n')
 
   if '-ho' in argsList:
     print('\n\nPlotting Hold out validation...')
-    coda.Plot_HoldOut_Validation(n_repetitions = argdict['-horep'] if '-horep' in list(argdict.keys()) else 100,
+    coda.plot_holdOut_validation(n_repetitions = argdict['-horep'] if '-horep' in list(argdict.keys()) else 100,
                                  test_size = argdict['-hots'] if '-hots' in list(argdict.keys()) else 20,
                                  path_out = argdict['-hoo'] if '-hoo' in list(argdict.keys()) else path_out,
                                  name_append = argdict['-hona'] if '-hona' in list(argdict.keys()) else '')
@@ -1430,13 +1430,13 @@ def dotheRest(argsList ,argdict , path_out):
 
   if '-hm' in argsList:
     print('\n\nPlotting Heat Map...')
-    coda.Plot_Heatmap(path_out = argdict['-hmo'] if '-hmo' in list(argdict.keys()) else path_out,
+    coda.plot_heatmap(path_out = argdict['-hmo'] if '-hmo' in list(argdict.keys()) else path_out,
                       name_append = argdict['-hmna'] if '-hmna' in list(argdict.keys()) else '')
     print('Done!\n\n')
 
   if '-rp' in argsList:
     print('\n\nPlotting Relevant Predictors...')
-    coda.Plot_Relevant_Predictors(n_max_features = argdict['-rpmax'] if '-rpmax' in list(argdict.keys()) else 100,
+    coda.plot_relevant_predictors(n_max_features = argdict['-rpmax'] if '-rpmax' in list(argdict.keys()) else 100,
                                   path_out = argdict['-rpo'] if '-rpo' in list(argdict.keys()) else path_out,
                                   name_append = argdict['-rpna'] if '-rpna' in list(argdict.keys()) else '')
     print('Done!\n\n')

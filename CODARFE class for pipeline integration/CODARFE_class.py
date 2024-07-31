@@ -36,23 +36,23 @@ class CODARFE():
 
   CODARFE requires the following parameters:
 
-    path2Data: str = None
+    path_to_data: str = None
           The path to the microbiome dataframe (counting table)
     flag_first_col_as_index_data: bool = False
           If True, the first row of the dataframe will be used as index
-    path2MetaData: str = None
+    path_to_metadata: str = None
           The path to the metadata dataframe with the target variable
     flag_first_col_as_index_metaData: bool = False
           If True, the first row of the dataframe will be used as index
-    metaData_Target: str = None
+    target: str = None
           The name of the target variable column inside the metadata
 
   Usage:
       1) Create an instance of CODARFE with your data:
 
-      coda = CODARFE(path2Data       = <path_to_microbiome_dataframe>,
-                     path2MetaData   = <path_to_metadata_dataframe>,
-                     metaData_Target = <string_target_variable_name>)
+      coda = CODARFE(path_to_data       = <path_to_microbiome_dataframe>,
+                     path_to_metadata   = <path_to_metadata_dataframe>,
+                     target = <string_target_variable_name>)
 
       2) Train a model:
 
@@ -73,7 +73,7 @@ class CODARFE():
 
       3) Save the model:
 
-      coda.Save_Instance(path_out    = <path_to_folder>,
+      coda.save_instance(path_out    = <path_to_folder>,
                          name_append = <name>)
 
 
@@ -81,7 +81,7 @@ class CODARFE():
 
       
       coda = CODARFE()
-      coda.Load_Instance(path2instance = <path_to_file_instance.foda>)
+      coda.load_instance(path2instance = <path_to_file_instance.foda>)
      
 
 
@@ -138,39 +138,39 @@ class CODARFE():
             super().__init__(self.mensagem)
             
   def __init__(self,
-               path2Data: Optional[str] = None,
-               path2MetaData: Optional[str] = None,
-               metaData_Target: Optional[str] = None,
+               path_to_data: Optional[str] = None,
+               path_to_metadata: Optional[str] = None,
+               target: Optional[str] = None,
                flag_first_col_as_index_data: bool = False,
                flag_first_col_as_index_metaData: bool = False
                ) -> None:
     """
     Parameters
     ----------
-    path2Data: str = None
+    path_to_data: str = None
           The path to the microbiome dataframe (counting table)
     flag_first_col_as_index_data: bool = False
           If True, the first column of the dataframe will be used as index
-    path2MetaData: str = None
+    path_to_metadata: str = None
           The path to the metadata dataframe with the target variable
     flag_first_col_as_index_metaData: bool = False
           If True, the first column of the dataframe will be used as index
-    metaData_Target: str = None
+    target: str = None
           The name of the target variable column inside the metadata
     """
     self.__flag_first_col_as_index_data = flag_first_col_as_index_data
     self.__flag_first_col_as_index_metaData = flag_first_col_as_index_metaData
-    self.__path2MetaData = path2MetaData
-    if path2Data != None and path2MetaData != None and metaData_Target != None:
+    self.__path_to_metadata = path_to_metadata
+    if path_to_data != None and path_to_metadata != None and target != None:
       print("Loading data... It may take some minutes depending on the size of the data")
-      self.data, self.target = self.__Read_Data(path2Data,path2MetaData,metaData_Target)
+      self.data, self.target = self.__read_data(path_to_data,path_to_metadata,target)
       self.__totalPredictorsInDatabase = len(self.data.columns)
       print("CODARFE instance created successfully")
     else:
       self.data = None
       self.target = None
       print("New empty instance created")
-      # print('No complete data provided. Please use the function Load_Instance(<path_2_instance>) to load an already created CODARFE model.')
+
 
     self.__sqrt_transform = None
     self.__transform = None
@@ -188,29 +188,29 @@ class CODARFE():
 
     self.__correlation_list = {}
 
-  def __Read_Data(self,path2Data,path2metadata,target_column_name):
-    if not os.path.exists(path2Data):
+  def __read_data(self,path_to_data,path_to_metadata,target_column_name):
+    if not os.path.exists(path_to_data):
       print('The Data file does not exists!')
       raise FileNotFoundError('The Data file does not exists!')
-    if not os.path.exists(path2metadata):
+    if not os.path.exists(path_to_metadata):
       raise FileNotFoundError('The Metadata file does not exists!')
 
-    extension = path2Data.split('.')[-1]
+    extension = path_to_data.split('.')[-1]
     if extension == 'csv':
-        data = pd.read_csv(path2Data,encoding='latin1')
+        data = pd.read_csv(path_to_data,encoding='latin1')
         if self.__flag_first_col_as_index_data:
           data.set_index(list(data.columns)[0],inplace=True)
     elif extension == 'tsv':
-        data = pd.read_csv(path2Data,sep='\t',encoding='latin1')
+        data = pd.read_csv(path_to_data,sep='\t',encoding='latin1')
         if self.__flag_first_col_as_index_data:
           data.set_index(list(data.columns)[0],inplace=True)
     elif extension == 'biom':
-        table = load_table(path2Data)
+        table = load_table(path_to_data)
         data = table.to_dataframe()
     elif extension == 'qza':
-        output_directory =  '/'.join(path2Data.split('/')[:-1])+'/QZA_EXTRACT_CODARFE_TEMP/'
+        output_directory =  '/'.join(path_to_data.split('/')[:-1])+'/QZA_EXTRACT_CODARFE_TEMP/'
         # Openning the .qza file as an zip file
-        with zipfile.ZipFile(path2Data, 'r') as zip_ref:
+        with zipfile.ZipFile(path_to_data, 'r') as zip_ref:
             # extracting all data to the output directory
             zip_ref.extractall(output_directory)
         # Getting the biom path file
@@ -221,13 +221,13 @@ class CODARFE():
 
         shutil.rmtree(output_directory) # remove the pathTree created
 
-    extension = path2metadata.split('.')[-1]
+    extension = path_to_metadata.split('.')[-1]
     if extension == 'csv':
-        metadata = pd.read_csv(path2metadata,encoding='latin1')
+        metadata = pd.read_csv(path_to_metadata,encoding='latin1')
         if self.__flag_first_col_as_index_metaData:
           metadata.set_index(list(metadata.columns)[0],inplace=True)
     elif extension == 'tsv':
-        metadata = pd.read_csv(path2metadata,sep='\t',encoding='latin1')
+        metadata = pd.read_csv(path_to_metadata,sep='\t',encoding='latin1')
         if self.__flag_first_col_as_index_metaData:
           metadata.set_index(list(metadata.columns)[0],inplace=True)
 
@@ -247,7 +247,7 @@ class CODARFE():
 
     return data,y
 
-  def Save_Instance(self,path_out: str,name_append: Optional[str]='CODARFE_MODEL')-> None:
+  def save_instance(self,path_out: str,name_append: Optional[str]='CODARFE_MODEL')-> None:
     """
     Parameters
     ----------
@@ -279,8 +279,8 @@ class CODARFE():
       if path_out[-1]!= '/':
         path_out+='/'
     else:
-      path_out = '/'.join(self.__path2MetaData.split('/')[:-1])+'/'
-    # adiciona '_' caso n tenha
+      path_out = '/'.join(self.__path_to_metadata.split('/')[:-1])+'/'
+    # add '_' if not
     if name_append != '':
       if name_append[0]!= '_':
         name_append = 'CODARFE_MODEL_'+name_append
@@ -310,7 +310,7 @@ class CODARFE():
 
     print('\n\nInstance saved at ',filename,'\n\n')
 
-  def Load_Instance(self,path2instance: str) -> None:
+  def load_instance(self,path2instance: str) -> None:
     """
     Load the CODARFE instance stored in the <path2instance> file into this object.
 
@@ -354,7 +354,7 @@ class CODARFE():
     print('\n\nInstance restored successfully!\n\n')
 
 
-  def __removeLowVar(self):
+  def __remove_low_var(self):
     aux = self.data.copy()
     cols = aux.columns
     selector = VarianceThreshold(aux.var(axis=1).mean()/8)#8
@@ -364,57 +364,57 @@ class CODARFE():
     print('\nA total of ',totRemoved,' taxa were removed due to very low variance\n')
     self.data =  self.data[not_to_drop]
 
-  def __toAbunRel(self,data):
+  def __to_abun_rel(self,data):
     return data.apply(lambda x: x/x.sum() if x.sum()!=0 else x,axis=1)
 
   # Shift the target to positive numbers only in case it has a CV <= 0.2 and negative numbers, so it can be used in the Poisson distribution (RF) 
   def __calc_new_redimension(self,target):
 
-    minimo = min(target)
-    maximo = max(target)
+    min_value = min(target)
+    max_value = max(target)
     if self.__min_target_transformed == None or self.__max_target_transformed == None:
-      self.__min_target_transformed = minimo
-      self.__max_target_transformed = maximo
+      self.__min_target_transformed = min_value
+      self.__max_target_transformed = max_value
 
-    numeros_redimensionados = [x + abs(self.__min_target_transformed)+1 for x in target]
-    return numeros_redimensionados
+    resized_numbers = [x + abs(self.__min_target_transformed)+1 for x in target]
+    return resized_numbers
 
   def __calc_inverse_redimension(self,predictions):
 
-    numeros_restaurados = [x - abs(self.__min_target_transformed)-1 for x in predictions]
+    restored_numbers = [x - abs(self.__min_target_transformed)-1 for x in predictions]
 
-    return numeros_restaurados
+    return restored_numbers
 
   # Uses sqrt to fllaten the target and shift it to 0-100 range in case the CV > 0.2. Helps the model to learn the distribution and solves negative numbers
   def __calc_new_sqrt_redimension(self,target):
     target = target.apply(lambda x: np.sqrt(abs(x)) * (-1 if x < 0 else 1))
 
-    minimo = min(target)
-    maximo = max(target)
+    min_value = min(target)
+    max_value = max(target)
     if self.__min_target_sqrt_transformed == None or self.__max_target_sqrt_transformed == None:
-      self.__min_target_sqrt_transformed = minimo
-      self.__max_target_sqrt_transformed = maximo
+      self.__min_target_sqrt_transformed = min_value
+      self.__max_target_sqrt_transformed = max_value
 
-    new_min = 0  # novo valor mínimo desejado
-    new_max = 100  # novo valor máximo desejado
-    # numeros_redimensionados = [x + abs(self.__min_target_sqrt_transformed)+1 for x in target]
-    numeros_redimensionados = [(x - minimo) / (maximo - minimo) * (new_max - new_min) + new_min for x in target]
-    return numeros_redimensionados
+    new_min = 0  # new min value
+    new_max = 100  # new max value
+    # resized_numbers = [x + abs(self.__min_target_sqrt_transformed)+1 for x in target]
+    resized_numbers = [(x - min_value) / (max_value - min_value) * (new_max - new_min) + new_min for x in target]
+    return resized_numbers
 
   def __calc_inverse_sqrt_redimension(self,predictions):
-    new_min = 0  # novo valor mínimo usado na transformação
-    new_max = 100  # novo valor máximo usado na transformação
+    new_min = 0  # new min value
+    new_max = 100  # new max value
 
-    minimo = self.__min_target_sqrt_transformed
-    maximo = self.__max_target_sqrt_transformed
+    min_value = self.__min_target_sqrt_transformed
+    max_value = self.__max_target_sqrt_transformed
 
-    numeros_restaurados = [(x - new_min) / (new_max - new_min) * (maximo - minimo) + minimo for x in predictions]
+    restored_numbers = [(x - new_min) / (new_max - new_min) * (max_value - min_value) + min_value for x in predictions]
 
-    # numeros_restaurados = [x + abs(self.__min_target_sqrt_transformed)+1 for x in predictions]
-    numeros_restaurados_sqrt_inverse = [(x**2) * (-1 if x <0 else 1) for x in numeros_restaurados]
+    # restored_numbers = [x + abs(self.__min_target_sqrt_transformed)+1 for x in predictions]
+    numeros_restaurados_sqrt_inverse = [(x**2) * (-1 if x <0 else 1) for x in restored_numbers]
     return numeros_restaurados_sqrt_inverse
 
-  def __toCLR(self,df): # Transform to CLr
+  def __to_CLR(self,df): # Transform to CLr
     aux = df.copy()
     cols = aux.columns
     aux+=0.0001 # Pseudo count
@@ -469,13 +469,13 @@ class CODARFE():
     bic = -2*llf + np.log(nobs) * k_params
     return round(bic)
 
-  def __superRFE(self,method,n_cols_2_remove,n_Kfold_CV):
-    # Define o total de atributos a serem removidos por rodada
+  def __super_RFE(self,method,n_cols_2_remove,n_Kfold_CV):
+    # Sets the total number of attributes to be removed per round
     n_cols_2_remove = max([int(len(self.data.columns)*n_cols_2_remove),1])
 
-    # Define X inicial como descritores
+    # Set initial X as descriptors
     if self.__applyAbunRel:
-      X_train = self.__toAbunRel(self.data)
+      X_train = self.__to_abun_rel(self.data)
     else:
       X_train = self.data
 
@@ -487,11 +487,11 @@ class CODARFE():
     else:
       y_train = self.target
 
-    # Inicializa tabela de resultados
+    # Initialize results table
     resultTable = pd.DataFrame(columns=['Atributos','R² adj','F-statistic','BIC','MSE-CV'])
     percentagedisplay = round(len(self.data.columns) - (len(X_train.columns)/len(self.data.columns)))
     while len(X_train.columns) - n_cols_2_remove > n_cols_2_remove or len(X_train.columns) > 1:
-      X = self.__toCLR(X_train)
+      X = self.__to_CLR(X_train)
 
       method.fit(X,y_train)
 
@@ -505,7 +505,7 @@ class CODARFE():
       BIC = self.__calc_bic(pred,y_train,X)
 
       msecv_results = []
-      #Adicionando etapa de validação cruzada
+      #Add cross-val validation for RMSE 
       kf = KFold(n_splits=n_Kfold_CV,shuffle=True,random_state=42)
 
       for train, test in kf.split(X):
@@ -525,93 +525,90 @@ class CODARFE():
 
       msecv = np.mean(msecv_results)
 
-      # caso consiga calcular um p-valor
+      # if there is a p_value
       if not math.isnan(Fprob) and r2adj < 1.0:
-        # Cria linha com: Atributos separados por ';', R² ajustado, estatistica F e estatistica BIC
+        # create a new line separeted by ";" with: R² adj, F-statistic and BIC
         newline = pd.DataFrame.from_records([{'Atributos':'@'.join(list(X.columns)),'R² adj':float(r2adj),'F-statistic':float(Fprob),'BIC':float(BIC),'MSE-CV':float(msecv)}])
-
-        # Adiciona linha na tabela de resultado
         resultTable = pd.concat([resultTable,newline])
 
-      # Cria tabela de dados dos atributos
+      # Create table of attributes
       atr = pd.DataFrame(data = [[xx,w] for xx,w in zip(X.columns,method.coef_)],columns = ['Atributos','coef'])
 
-      # Transforma coluna de coeficiente p/ float
       atr = atr.astype({'coef':float})
 
-      # Remove colunas com coeficientes iguais ou menores que 0 / Acelera o rfe
-      atr = atr[atr.coef != 0]# Remove zeros
-      atr.coef = atr.coef.abs()#Transforma em abs para remover apenas os X% mais perto de zero
+      #Remove columns with coef 0 to speed up RFE
+      atr = atr[atr.coef != 0]# 
+      atr.coef = atr.coef.abs()# Transform it to abs to remove only near zero values (keep negative high correlation)
 
-      # Ordena de forma decrescente pelo coeficiente
+
       atr = atr.sort_values(by=['coef'],ascending=False)
 
-      # Cria lista de atributos selecionados
+      #Create list of selected attributes
       atributos = list(atr.Atributos)
 
-      # Remove espaços em brancos inseridos pela tabela de atributos
+      
       atributos = [x.strip() for x in atributos]
 
-      # Remove n_cols_2_remove menos relevantes
+      # Remove n_cols_2_remove lowest coefs
       atributos = atributos[:-n_cols_2_remove]
 
-      # Remove atributos n selecionados
+      # Remove not selected
       if self.__applyAbunRel:
-        X_train = self.__toAbunRel(self.data[atributos])
+        X_train = self.__to_abun_rel(self.data[atributos])
       else:
         X_train = X_train[atributos]
 
-      # Calculo da % para mostrar na tela
+      # Calculates the % for display ... not continued in this version
       percentagedisplay = round(len(self.data.columns) - (len(X_train.columns)/len(self.data.columns)))
       #print(percentagedisplay,'% done...\n')
-    #Remove possiveis nan
+    
     resultTable.dropna(inplace=True)
     #print('100% done!\n')
-    # Retorna a tabela com os resultados
+    
     return resultTable
 
-  def __scoreAndSelection(self,resultTable,weightR2,weightProbF,weightBIC,weightRMSE):
-    # Cria cópia da tabela original
+  def __score_and_selection(self,resultTable,weightR2,weightProbF,weightBIC,weightRMSE):
+    # copy original
     df_aux = resultTable.copy()
     df_aux.replace([np.inf, -np.inf], np.nan, inplace=True)
     df_aux.dropna(inplace=True)
 
-    # Normaliza o R² ajustado
+    # Normalize R² adj
     df_aux['R² adj'] = MinMaxScaler().fit_transform(np.array(df_aux['R² adj']).reshape(-1,1))
 
-    # Aplica a transformação -log10(f) e então normaliza a estatistica f
+    # Apply -log10(f) and normalize F-statistic
     df_aux['F-statistic'] = [-math.log10(x) if x !=0 else sys.float_info.max for x in df_aux['F-statistic']]
     df_aux['F-statistic'] = MinMaxScaler().fit_transform(np.array(df_aux['F-statistic']).reshape(-1,1))
 
-    # Normaliza e então inverte a estatistica BIC (Quanto menor menor)
+    # Normalize and inverts BIC (lower the better)
     df_aux['BIC'] = MinMaxScaler().fit_transform(np.array(df_aux['BIC']).reshape(-1,1))
     df_aux['BIC'] = [np.clip(1-x,0,1) for x in df_aux['BIC']]
 
-    # Normaliza 'MSE-CV' e inverte a estatistica MSE-cv
+    # Normalize and inverts 'MSE-CV'
     df_aux['MSE-CV'] = MinMaxScaler().fit_transform(np.array(df_aux['MSE-CV']).reshape(-1,1))
     df_aux['MSE-CV'] = [np.clip(1-x,0,1) for x in df_aux['MSE-CV']]
 
-    # Cria coluna de Score
+    # Create Score column
     df_aux['Score'] = [(r*weightR2)+(f*weightProbF)+(b*weightBIC)+(m*weightRMSE) for r,f,b,m in zip(df_aux['R² adj'],df_aux['F-statistic'],df_aux['BIC'],df_aux['MSE-CV'])]
 
-    # Encontra indice de maior Score
+    # Finds the hights score index
     indexSelected = list(df_aux.Score).index(max(list(df_aux.Score)))
 
-    # Seleciona atributos
+    # Select attributes
     selected = df_aux.iloc[indexSelected].Atributos.split('@')
 
-    self.selected_taxa = selected # salva os atributos selecionados
+    self.selected_taxa = selected # save it
 
     retEstatisticas = list(resultTable.iloc[indexSelected][['R² adj','F-statistic','BIC','MSE-CV']])
 
     self.results = {'R² adj':retEstatisticas[0],
                     'F-statistic':retEstatisticas[1],
                     'BIC':retEstatisticas[2],
-                    'MSE-CV':retEstatisticas[3]} # Salva as estatisticas
+                    'MSE-CV':retEstatisticas[3]} 
 
     retScore = df_aux.iloc[indexSelected].Score
 
-    self.score_best_model = retScore # Salva a pontuação do melhor modelo
+    self.score_best_model = retScore # 
 
   def __write_results(self,path_out,name_append):
     # adiciona '/' caso n tneha
@@ -619,11 +616,11 @@ class CODARFE():
       if path_out[-1]!= '/':
         path_out+='/'
     else:
-      if type(self.__path2MetaData) != type(None):
-        if self.__path2MetaData.split('/')[:-1] != []:
-          path_out = '/'.join(self.__path2MetaData.split('/')[:-1])+'/'
+      if type(self.__path_to_metadata) != type(None):
+        if self.__path_to_metadata.split('/')[:-1] != []:
+          path_out = '/'.join(self.__path_to_metadata.split('/')[:-1])+'/'
 
-    # adiciona '_' caso n tenha
+    # add '_' if not
     if name_append != '':
       if name_append[0]!= '_':
         name_append = '_'+name_append
@@ -641,13 +638,13 @@ class CODARFE():
       f.write('Selected taxa: \n\n')
       f.write(','.join(self.selected_taxa))
 
-  def __DefineModel(self,allow_transform_high_variation):
+  def __define_model(self,allow_transform_high_variation):
 
       self.__model = RandomForestRegressor(n_estimators = 160, criterion = 'poisson',random_state=42)
       X = self.data[self.selected_taxa]
       if self.__applyAbunRel:
-        X = self.__toAbunRel(X)
-      X = self.__toCLR(X)
+        X = self.__to_abun_rel(X)
+      X = self.__to_CLR(X)
 
       if allow_transform_high_variation and np.std(self.target)/np.mean(self.target)>0.2 :# Caso varie muitas vezes a média (ruido)
         targetLogTransformed = self.__calc_new_sqrt_redimension(self.target) # Aplica transformação no alvo
@@ -691,7 +688,7 @@ class CODARFE():
       elif value < 0:
           raise ValueError(f"{name} must be greater than or equal to 0.")
 
-  def __checkModelParams(self,
+  def __check_model_params(self,
                          write_results,
                          path_out,
                          name_append,
@@ -724,7 +721,7 @@ class CODARFE():
       self.__check_non_negative_float(weightBIC, "weightBIC")
       self.__check_non_negative_float(weightRMSE, "weightRMSE")
 
-  def CreateModel(self,
+  def fit(self,
                   write_results: bool =True,
                   path_out: str ='',
                   name_append: str ='',
@@ -782,33 +779,33 @@ class CODARFE():
     """
 
     if type(self.data) == type(None):
-      print('No data was provided!\nPlease make sure to provide complete information or use the Load_Instance(<path_2_instance>) function to load an already created CODARFE model')
+      print('No data was provided!\nPlease make sure to provide complete information or use the load_instance(<path_2_instance>) function to load an already created CODARFE model')
       return None
     print('\n\nChecking model parameters...',end="")
-    self.__checkModelParams(write_results,path_out,name_append,rLowVar,applyAbunRel,allow_transform_high_variation,percentage_cols_2_remove,n_Kfold_CV,weightR2,weightProbF,weightBIC,weightRMSE,n_max_iter_huber)
+    self.__check_model_params(write_results,path_out,name_append,rLowVar,applyAbunRel,allow_transform_high_variation,percentage_cols_2_remove,n_Kfold_CV,weightR2,weightProbF,weightBIC,weightRMSE,n_max_iter_huber)
     print('OK')
 
     n_cols_2_remove = percentage_cols_2_remove/100
-    self.__n_max_iter_huber = n_max_iter_huber # Define o numero de iterações utilziado pelo huber
+    self.__n_max_iter_huber = n_max_iter_huber # Defines the number of iterations used by hubber regressor
 
     if rLowVar:
-      #Remove baixa variância
-      self.__removeLowVar()
+      #Removes low variation
+      self.__remove_low_var()
 
     if applyAbunRel:
-      #transforma em abundância relativa
+      #transform to abunrel
       self.__applyAbunRel = True
 
     method = HuberRegressor(epsilon = 2.0,alpha = 0.0003, max_iter = n_max_iter_huber)
 
-    # Remove iterativamente atributos enquanto cria vários modelos
-    resultTable = self.__superRFE(method,n_cols_2_remove,n_Kfold_CV)
+    # Iteratively remove attributes while creating multiple models
+    resultTable = self.__super_RFE(method,n_cols_2_remove,n_Kfold_CV)
 
     if len(resultTable)>0:
       # Calcula pontuação e seleciona o melhor modelo
-      self.__scoreAndSelection(resultTable,weightR2,weightProbF,weightBIC,weightRMSE)
+      self.__score_and_selection(resultTable,weightR2,weightProbF,weightBIC,weightRMSE)
 
-      self.__DefineModel(allow_transform_high_variation)
+      self.__define_model(allow_transform_high_variation)
 
       print('\nModel created!\n\n')
       print('Results: \n\n')
@@ -822,8 +819,8 @@ class CODARFE():
       method = HuberRegressor(epsilon = 2.0,alpha = 0.0003, max_iter = self.__n_max_iter_huber)
       X = self.data[self.selected_taxa]
       if self.__applyAbunRel:
-        X = self.__toAbunRel(X)
-      X = self.__toCLR(X)
+        X = self.__to_abun_rel(X)
+      X = self.__to_CLR(X)
       y = self.target
       resp = method.fit(X,y)
       self.weights = pd.DataFrame(data={'Predictors':resp.feature_names_in_,'weights':resp.coef_})
@@ -843,36 +840,36 @@ class CODARFE():
                keepdims=True)).T * np.sqrt(
         np.sum(bm**2, axis=0, keepdims=True)))
 
-  def __CreateCorrelationImputer(self):
-    threshold = 0.6 # Considered as strong correlation
-    aux = self.__toCLR(self.data) # Remove composicionalidade usando CLR nos dados originais
+  def __create_correlation_imputer(self):
+    threshold = 0.7 # Considered as strong correlation
+    aux = self.__to_CLR(self.data) # Apply CLR
 
-    for selected in self.selected_taxa: # Para cada taxa selecionada
-      self.__correlation_list[selected] = [] # Cria instancia para esta taxa selecionada
-      for taxa in aux.columns: # Verifica correlação com todas as outras
-        if taxa != selected: # n comparar consigo mesmo
-          corr = self.__pairwise_correlation(np.array(aux[selected]),np.array(aux[taxa]))# Calcula a correlação de forma rapida
-          if corr >= threshold: # Somenta adiciona caso seja fortemente correlacionada
-            self.__correlation_list[selected].append({'taxa':taxa,'corr':corr}) # Adiciona taxa correlacionada
-      self.__correlation_list[selected].sort(reverse=True,key = lambda x: x['corr']) # Ordena pela correlação
+    for selected in self.selected_taxa: # For each taxa
+      self.__correlation_list[selected] = [] # create a instance of this taxa
+      for taxa in aux.columns: # verify correlation to every single other taxa 
+        if taxa != selected: # 
+          corr = self.__pairwise_correlation(np.array(aux[selected]),np.array(aux[taxa]))# calculates the correlation
+          if corr >= threshold: # adds it if high correlated
+            self.__correlation_list[selected].append({'taxa':taxa,'corr':corr}) # add the new taxa
+      self.__correlation_list[selected].sort(reverse=True,key = lambda x: x['corr']) # Sort by correlation
 
-  def __Read_new_Data(self,path2Data):
-    extension = path2Data.split('.')[-1]
+  def __read_new_data(self,path_to_data):
+    extension = path_to_data.split('.')[-1]
     if extension == 'csv':
-        data = pd.read_csv(path2Data,encoding='latin1')
+        data = pd.read_csv(path_to_data,encoding='latin1')
         if self.__flag_first_col_as_index_data:
           data.set_index(list(data.columns)[0],inplace=True)
     elif extension == 'tsv':
-        data = pd.read_csv(path2Data,sep='\t',encoding='latin1')
+        data = pd.read_csv(path_to_data,sep='\t',encoding='latin1')
         if self.__flag_first_col_as_index_data:
           data.set_index(list(data.columns)[0],inplace=True)
     elif extension == 'biom':
-        table = load_table(path2Data)
+        table = load_table(path_to_data)
         data = table.to_dataframe()
     elif extension == 'qza':
-        output_directory =  '/'.join(path2Data.split('/')[:-1])+'/QZA_EXTRACT_CODARFE_TEMP/'
+        output_directory =  '/'.join(path_to_data.split('/')[:-1])+'/QZA_EXTRACT_CODARFE_TEMP/'
         # Openning the .qza file as an zip file
-        with zipfile.ZipFile(path2Data, 'r') as zip_ref:
+        with zipfile.ZipFile(path_to_data, 'r') as zip_ref:
             # extracting all data to the output directory
             zip_ref.extractall(output_directory)
         # Getting the biom path file
@@ -884,7 +881,7 @@ class CODARFE():
         shutil.rmtree(output_directory) # remove the pathTree created
     return data
 
-  def Predict(self,
+  def predict(self,
               path2newdata: str,
               applyAbunRel: bool = True,
               writeResults: bool = True,
@@ -926,27 +923,27 @@ class CODARFE():
     if writeResults and ((path_out != '' and not os.path.exists(path_out)) or path_out == ''):
       raise FileNotFoundError('\nThe path out does not exists or is empty.')
 
-    new = self.__Read_new_Data(path2newdata)
+    new = self.__read_new_data(path2newdata)
     newindex = new.index
     if self.__correlation_list == {}:
       print('\n\nCreating correlation list for imputation method. It may take a few minutes depending on the size of the original dataset, but it will be created only once.\n\n')
-      self.__CreateCorrelationImputer()
+      self.__create_correlation_imputer()
       print('Correlation list created!\n\n')
 
-    data2predict = pd.DataFrame() # Cria um dataframe para colocar apenas os dados selecionados
+    data2predict = pd.DataFrame() # Creates a dataframe to place only the selected data
     totalNotFound = 0
-    for selected in self.selected_taxa: # Para cada taxa selecionada
-      if selected in new.columns: # Caso exista no novo conjunto
-        data2predict[selected] = new[selected] # Adiciona o valor do novo conjunto no df de previsão
+    for selected in self.selected_taxa: # For each selected taxa
+      if selected in new.columns: # if exists in the new samples
+        data2predict[selected] = new[selected] # add the new value
       else: # Senão
-        found = False # Flag que indica se encontrou substitudo
-        for correlated_2_selected in self.__correlation_list[selected]: # Para cada taxa correlacionada com a que não existe
-          if correlated_2_selected['taxa'] in new.columns: # Caso encontre um substituto
-            data2predict[selected] = new[correlated_2_selected['taxa']] # Coloca ele no lugar do que n existe
-            found = True # Seta flag
+        found = False # Flag that defines if a substitute was found
+        for correlated_2_selected in self.__correlation_list[selected]: #For each taxa
+          if correlated_2_selected['taxa'] in new.columns: # if a substitute was found
+            data2predict[selected] = new[correlated_2_selected['taxa']] # replace the missing one
+            found = True # Set flag
             break
         if not found:
-          data2predict[selected] = 0 # Caso não encontra retorna zero
+          data2predict[selected] = 0 # if could not find one, retorn zero
           print('Warning! Taxa ',selected,' was not found and have no correlations! It may affect the model accuracy')
           totalNotFound+=1
 
@@ -954,29 +951,21 @@ class CODARFE():
       print('The new samples has less than 25% of selected taxa. The model will not be able to predict it.')
       return None,totalNotFound
 
-    # print('totalNotFound -> ',totalNotFound,'Total taxa ->',len(self.selected_taxa))
-
-    # print('\n\n\ncomo veio ao mundo \n\n\n')
-    # print(data2predict.head())
+    
     data2predict = data2predict.fillna(0)
 
     if applyAbunRel:
-      data2predict = self.__toAbunRel(data2predict) # Transforma em abundancia relativa
+      data2predict = self.__to_abun_rel(data2predict) 
 
-    # print('\n\n\nabundancia relativa \n\n\n')
-    # print(data2predict.head())
 
-    data2predict = self.__toCLR(data2predict) # Transforma para CLR
-
-    # print('\n\n\nCLR \n\n\n')
-    # print(data2predict.head())
+    data2predict = self.__to_CLR(data2predict) 
 
     resp = self.__model.predict(data2predict)
 
-    if self.__sqrt_transform: # Caso o modelo tenha sido treinado nos dados log transformados
+    if self.__sqrt_transform: # If the model was trained using sqrt 
       resp = self.__calc_inverse_sqrt_redimension(resp)
     if self.__transform:
-      resp = self.__calc_inverse_redimension(resp) # Retorna os valores restaurados ao original
+      resp = self.__calc_inverse_redimension(resp) # undo transformation
 
     if writeResults:
 
@@ -984,7 +973,7 @@ class CODARFE():
         if path_out[-1]!= '/':
           path_out+='/Prediction'
       else:
-        path_out = '/'.join(self.__path2MetaData.split('/')[:-1])+'/Prediction'
+        path_out = '/'.join(self.__path_to_metadata.split('/')[:-1])+'/Prediction'
       if name_append != '':
         name_append = '_'+name_append
       filename = path_out+name_append+'.csv'
@@ -992,7 +981,7 @@ class CODARFE():
 
     return resp,totalNotFound
 
-  def Plot_Correlation(self,saveImg: bool=False,path_out: str='',name_append: str='') -> None:
+  def plot_correlation(self,saveImg: bool=False,path_out: str='',name_append: str='') -> None:
     """
     Parameters
     ---------
@@ -1029,9 +1018,9 @@ class CODARFE():
     X = self.data[self.selected_taxa]
 
     if self.__applyAbunRel:
-      X = self.__toAbunRel(X)
+      X = self.__to_abun_rel(X)
 
-    X = self.__toCLR(X)
+    X = self.__to_CLR(X)
     pred = self.__model.predict(X)
 
     if self.__sqrt_transform: # Caso tenha aprendido com valores transformados
@@ -1065,10 +1054,10 @@ class CODARFE():
       if path_out[-1]!= '/':
         path_out+='/'
     else:
-      if type(self.__path2MetaData) != type(None):
-        if self.__path2MetaData.split('/')[:-1] != []:
-          path_out = '/'.join(self.__path2MetaData.split('/')[:-1])+'/'
-    # adiciona '_' caso n tenha
+      if type(self.__path_to_metadata) != type(None):
+        if self.__path_to_metadata.split('/')[:-1] != []:
+          path_out = '/'.join(self.__path_to_metadata.split('/')[:-1])+'/'
+    # add '_' if not
     if name_append != '':
       if name_append[0]!= '_':
         name_append = '_'+name_append
@@ -1086,7 +1075,7 @@ class CODARFE():
     if path_out != '' and not os.path.exists(path_out):
       raise FileNotFoundError("\nThe path out does not exists.\nPlease try again with the correct path or let it blank to write in the same path as the metadata")
 
-  def Plot_HoldOut_Validation(self,
+  def plot_holdOut_validation(self,
                               n_repetitions: int = 100,
                               test_size: int = 20,
                               saveImg: str = False,
@@ -1129,9 +1118,9 @@ class CODARFE():
     X = self.data[self.selected_taxa]
     
     if self.__applyAbunRel:
-      X = self.__toAbunRel(X)
+      X = self.__to_abun_rel(X)
 
-    X = self.__toCLR(X)
+    X = self.__to_CLR(X)
     y = self.target
     maes = []
     for i in range(n_repetitions):
@@ -1190,10 +1179,10 @@ class CODARFE():
       if path_out[-1]!= '/':
         path_out+='/'
     else:
-      if type(self.__path2MetaData) != type(None):
-        if self.__path2MetaData.split('/')[:-1] != []:
-          path_out = '/'.join(self.__path2MetaData.split('/')[:-1])+'/'
-    # adiciona '_' caso n tenha
+      if type(self.__path_to_metadata) != type(None):
+        if self.__path_to_metadata.split('/')[:-1] != []:
+          path_out = '/'.join(self.__path_to_metadata.split('/')[:-1])+'/'
+    # add '_' if not
     if name_append != '':
       if name_append[0]!= '_':
         name_append = '_'+name_append
@@ -1204,7 +1193,7 @@ class CODARFE():
     plt.savefig(filename, dpi=600, bbox_inches='tight')
 
 
-  def Plot_Relevant_Predictors(self,
+  def plot_relevant_predictors(self,
                                n_max_features: int = 100,
                                saveImg: bool = False,
                                path_out: str = '',
@@ -1246,8 +1235,8 @@ class CODARFE():
     method = HuberRegressor(epsilon = 2.0,alpha = 0.0003, max_iter = self.__n_max_iter_huber)
     X = self.data[self.selected_taxa]
     if self.__applyAbunRel:
-      X = self.__toAbunRel(X)
-    X = self.__toCLR(X)
+      X = self.__to_abun_rel(X)
+    X = self.__to_CLR(X)
     # y = self.target
     if self.__sqrt_transform:
       y = np.array(self.__calc_new_sqrt_redimension(self.target))
@@ -1298,10 +1287,10 @@ class CODARFE():
       if path_out[-1]!= '/':
         path_out+='/'
     else:
-      if type(self.__path2MetaData) != type(None):
-        if self.__path2MetaData.split('/')[:-1] != []:
-          path_out = '/'.join(self.__path2MetaData.split('/')[:-1])+'/'
-    # adiciona '_' caso n tenha
+      if type(self.__path_to_metadata) != type(None):
+        if self.__path_to_metadata.split('/')[:-1] != []:
+          path_out = '/'.join(self.__path_to_metadata.split('/')[:-1])+'/'
+    # add '_' if not
     if name_append != '':
       if name_append[0]!= '_':
         name_append = '_'+name_append
@@ -1364,7 +1353,7 @@ class CODARFE():
 
     return im, cbar
 
-  def Plot_Heatmap(self,
+  def plot_heatmap(self,
                    saveImg: bool=False,
                    path_out: str='',
                    name_append: str=''
@@ -1400,7 +1389,7 @@ class CODARFE():
     # Pega o dataframe original porem apenas o que foi selecioando
     selected_features = self.data[self.selected_taxa]
     if self.__applyAbunRel:
-      selected_features = self.__toAbunRel(selected_features)
+      selected_features = self.__to_abun_rel(selected_features)
     # Clusterizando bacterias
     y = self.target
 
@@ -1449,10 +1438,10 @@ class CODARFE():
       if path_out[-1]!= '/':
         path_out+='/'
     else:
-      if type(self.__path2MetaData) != type(None):
-        if self.__path2MetaData.split('/')[:-1] != []:
-          path_out = '/'.join(self.__path2MetaData.split('/')[:-1])+'/'
-    # adiciona '_' caso n tenha
+      if type(self.__path_to_metadata) != type(None):
+        if self.__path_to_metadata.split('/')[:-1] != []:
+          path_out = '/'.join(self.__path_to_metadata.split('/')[:-1])+'/'
+    # add '_' if not
     if name_append != '':
       if name_append[0]!= '_':
         name_append = '_'+name_append
