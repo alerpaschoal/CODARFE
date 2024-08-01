@@ -87,5 +87,35 @@ If after testing all the possibilities above the model is still yielding bad res
 # Bugs and errors?
 Because most of the packages are constantly updated, it is possible that it could affect the tool versions for non-Windows users. If you find any bugs or strange behavior, please report it to us through the email: murilobarbosa@alunos.utfpr.edu.br  
 
-# Citation
-If you use CODARFE for your research, please, don't forget to cite us throught [citation]
+# Citation Requirement for Using CODARFE
+
+Thank you for using **CODARFE**. If you find this tool useful for your research or any other work, we kindly request that you cite our article in your publications and presentations. Proper citation is essential for acknowledging the effort involved in developing and maintaining this tool.
+
+**Citation Information:**
+
+*Article Title:* **CODARFE: Unlocking the prediction of continuous environmental variables based on microbiome**  
+
+*Authors:* Murilo Caminotto Barbosa \*,  Joao Fernando Marques da Silva, Leonardo Cardoso Alves, Robert D. Finn,  Alexandre R Paschoal \*
+
+*DOI:* https://doi.org/10.1101/2024.07.18.604052
+
+Corresponding authors e-mail: murilobarbosa@alunos.utfpr.edu.br & paschoal@utfpr.edu.br
+
+BibTeX:
+
+~~~
+@article{barbosa2024codarfe,
+  title={CODARFE: Unlocking the prediction of continuous environmental variables based on microbiome},
+  author={Barbosa, Murilo Caminotto and da Silva, Joao Fernando Marques and Alves, Leonardo Cardoso and Finn, Robert D and Paschoal, Alexandre R},
+  journal={bioRxiv},
+  pages={2024--07},
+  year={2024},
+  publisher={Cold Spring Harbor Laboratory}
+}
+~~~
+
+**Important Note:**
+
+By using **CODARFE**, you agree to cite the above-mentioned article in any publication, presentation, or other work that makes use of this tool. Proper citation helps us to track the impact and usage of our work, and supports the continued development and maintenance of the tool.
+
+Thank you for your cooperation and support.
