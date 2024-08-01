@@ -116,7 +116,7 @@ class CODARFE():
 
       5) Predict the target variable in new samples:
 
-      coda.Predict( path2newdata = <path_to_new_data>,
+      coda.Predict( path_to_new_data = <path_to_new_data>,
                     applyAbunRel = True,
                     writeResults = True,
                     path_out     = <path_out>
@@ -469,6 +469,21 @@ class CODARFE():
     bic = -2*llf + np.log(nobs) * k_params
     return round(bic)
 
+  def __check_coef_of_variation_target_for_transformation(self,allow_transform_high_variation):
+    if allow_transform_high_variation and np.std(self.target)/np.mean(self.target)>0.2 :# Caso varie muitas vezes a média (ruido)
+      
+      self.__sqrt_transform = True 
+      self.__transform = False
+
+    else:
+      if any(t < 0 for t in self.target):
+        self.__transform = True
+        self.__sqrt_transform = False
+        
+      else:
+        self.__sqrt_transform = False # Define flag de transformação
+        self.__transform = False
+
   def __super_RFE(self,method,n_cols_2_remove,n_Kfold_CV):
     # Sets the total number of attributes to be removed per round
     n_cols_2_remove = max([int(len(self.data.columns)*n_cols_2_remove),1])
@@ -646,24 +661,19 @@ class CODARFE():
         X = self.__to_abun_rel(X)
       X = self.__to_CLR(X)
 
-      if allow_transform_high_variation and np.std(self.target)/np.mean(self.target)>0.2 :# Caso varie muitas vezes a média (ruido)
+      if self.__sqrt_transform:# Caso varie muitas vezes a média (ruido)
+      
         targetLogTransformed = self.__calc_new_sqrt_redimension(self.target) # Aplica transformação no alvo
         self.__model.fit(X,targetLogTransformed) # Treina com o alvo transformado
-        self.__sqrt_transform = True # Define flag de transformação
-        self.__transform = False
+        
+      elif self.__transform:
+
+        targetTranformed = self.__calc_new_redimension(self.target)
+        self.__model.fit(X,targetTranformed)
+        print(f"The data was shifted {abs(self.__min_target_transformed)} + 1 units due to negative values not supported by poisson distribution.")
 
       else:
-        if any(t < 0 for t in self.target):
-          self.__transform = True
-          targetTranformed = self.__calc_new_redimension(self.target)
-          self.__model.fit(X,targetTranformed)
-          self.__sqrt_transform = False
-          print(f"The data was shifted {abs(self.__min_target_transformed)} + 1 units due to negative values not supported by poisson distribution.")
-
-        else:
-          self.__model.fit(X,self.target) # Treina um segundo modelo com o alvo como é
-          self.__sqrt_transform = False # Define flag de transformação
-          self.__transform = False
+        self.__model.fit(X,self.target) # Treina um segundo modelo com o alvo como é
   
 
   def __check_boolean(self,value, name):
@@ -797,6 +807,8 @@ class CODARFE():
       self.__applyAbunRel = True
 
     method = HuberRegressor(epsilon = 2.0,alpha = 0.0003, max_iter = n_max_iter_huber)
+    # Define flags related to target transformation
+    self.__check_coef_of_variation_target_for_transformation(allow_transform_high_variation)
 
     # Iteratively remove attributes while creating multiple models
     resultTable = self.__super_RFE(method,n_cols_2_remove,n_Kfold_CV)
@@ -853,15 +865,15 @@ class CODARFE():
             self.__correlation_list[selected].append({'taxa':taxa,'corr':corr}) # add the new taxa
       self.__correlation_list[selected].sort(reverse=True,key = lambda x: x['corr']) # Sort by correlation
 
-  def __read_new_data(self,path_to_data):
+  def __read_new_data(self,path_to_data,flag_first_col_as_index):
     extension = path_to_data.split('.')[-1]
     if extension == 'csv':
         data = pd.read_csv(path_to_data,encoding='latin1')
-        if self.__flag_first_col_as_index_data:
+        if flag_first_col_as_index:
           data.set_index(list(data.columns)[0],inplace=True)
     elif extension == 'tsv':
         data = pd.read_csv(path_to_data,sep='\t',encoding='latin1')
-        if self.__flag_first_col_as_index_data:
+        if flag_first_col_as_index:
           data.set_index(list(data.columns)[0],inplace=True)
     elif extension == 'biom':
         table = load_table(path_to_data)
@@ -882,9 +894,10 @@ class CODARFE():
     return data
 
   def predict(self,
-              path2newdata: str,
+              path_to_new_data: str,
               applyAbunRel: bool = True,
               writeResults: bool = True,
+              flag_first_col_as_index = True,
               path_out: str = '',
               name_append: str = ''
               ) -> Optional[Tuple[pd.DataFrame,int]]:
@@ -897,6 +910,8 @@ class CODARFE():
           Flag to apply relative abundance transformation
     writeResults: bool = False
           Flag to write the results
+    flag_first_col_as_index: bool = True
+          Flag indicating if the index appears as the first column in the new data file
     path_out: str = ""
           Filename of the output. If no filename is provided it will be saved in the same directory as the metadata with the name of 'Prediction.csv'
     name_append: str = ""
@@ -923,7 +938,7 @@ class CODARFE():
     if writeResults and ((path_out != '' and not os.path.exists(path_out)) or path_out == ''):
       raise FileNotFoundError('\nThe path out does not exists or is empty.')
 
-    new = self.__read_new_data(path2newdata)
+    new = self.__read_new_data(path_to_new_data,flag_first_col_as_index)
     newindex = new.index
     if self.__correlation_list == {}:
       print('\n\nCreating correlation list for imputation method. It may take a few minutes depending on the size of the original dataset, but it will be created only once.\n\n')

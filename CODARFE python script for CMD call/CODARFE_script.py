@@ -293,6 +293,21 @@ class CODARFE():
     bic = -2*llf + np.log(nobs) * k_params
     return round(bic)
 
+  def __check_coef_of_variation_target_for_transformation(self,allow_transform_high_variation):
+    if allow_transform_high_variation and np.std(self.target)/np.mean(self.target)>0.2 :# Caso varie muitas vezes a média (ruido)
+      
+      self.__sqrt_transform = True 
+      self.__transform = False
+
+    else:
+      if any(t < 0 for t in self.target):
+        self.__transform = True
+        self.__sqrt_transform = False
+        
+      else:
+        self.__sqrt_transform = False # Define flag de transformação
+        self.__transform = False
+
   def __super_RFE(self,method,n_cols_2_remove,n_Kfold_CV):
     # Define o total de atributos a serem removidos por rodada
     n_cols_2_remove = max([int(len(self.data.columns)*n_cols_2_remove),1])
@@ -490,24 +505,19 @@ class CODARFE():
         X = self.__to_abun_rel(X)
       X = self.__to_CLR(X)
 
-      if allow_transform_high_variation and np.std(self.target)/np.mean(self.target)>0.2 :# Caso varie muitas vezes a média (ruido)
+      if self.__sqrt_transform:# Caso varie muitas vezes a média (ruido)
+      
         targetLogTransformed = self.__calc_new_sqrt_redimension(self.target) # Aplica transformação no alvo
         self.__model.fit(X,targetLogTransformed) # Treina com o alvo transformado
-        self.__sqrt_transform = True # Define flag de transformação
-        self.__transform = False
+        
+      elif self.__transform:
+
+        targetTranformed = self.__calc_new_redimension(self.target)
+        self.__model.fit(X,targetTranformed)
+        print(f"The data was shifted {abs(self.__min_target_transformed)} + 1 units due to negative values not supported by poisson distribution.")
 
       else:
-        if any(t < 0 for t in self.target):
-          self.__transform = True
-          targetTranformed = self.__calc_new_redimension(self.target)
-          self.__model.fit(X,targetTranformed)
-          self.__sqrt_transform = False
-          print(f"The data was shifted {abs(self.__min_target_transformed)} + 1 units due to negative values not supported by poisson distribution.")
-
-        else:
-          self.__model.fit(X,self.target) # Treina um segundo modelo com o alvo como é
-          self.__sqrt_transform = False # Define flag de transformação
-          self.__transform = False
+        self.__model.fit(X,self.target) # Treina um segundo modelo com o alvo como é
 
   def __check_boolean(self,value, name):
       if not isinstance(value, bool):
@@ -608,8 +618,9 @@ class CODARFE():
 
 
     method = HuberRegressor(epsilon = 2.0,alpha = 0.0003, max_iter = n_max_iter_huber)
-
-    print("\n\nSTARTING RFE!\n\n")
+    # Define flags related to target transformation
+    self.__check_coef_of_variation_target_for_transformation(allow_transform_high_variation)
+    print("\n\nSTARTING RFE\n\n")
 
     # Remove iterativamente atributos enquanto cria vários modelos
     resultTable = self.__super_RFE(method,n_cols_2_remove,n_Kfold_CV)
@@ -655,16 +666,16 @@ class CODARFE():
             self.__correlation_list[selected].append({'taxa':taxa,'corr':corr}) # Adiciona taxa correlacionada
       self.__correlation_list[selected].sort(reverse=True,key = lambda x: x['corr']) # Ordena pela correlação
 
-  def __read_new_data(self,path_to_data):
+  def __read_new_data(self,path_to_data,flag_first_col_as_index):
 
     extension = path_to_data.split('.')[-1]
     if extension == 'csv':
         data = pd.read_csv(path_to_data,encoding='latin1')
-        if self.__flag_first_col_as_index_data:
+        if flag_first_col_as_index:
           data.set_index(list(data.columns)[0],inplace=True)
     elif extension == 'tsv':
         data = pd.read_csv(path_to_data,sep='\t',encoding='latin1')
-        if self.__flag_first_col_as_index_data:
+        if flag_first_col_as_index:
           data.set_index(list(data.columns)[0],inplace=True)
     elif extension == 'biom':
         table = load_table(path_to_data)
@@ -688,6 +699,7 @@ class CODARFE():
               path2newdata,
               applyAbunRel = True,
               writeResults = True,
+              flag_first_col_as_index = True,
               path_out = '',
               name_append = ''
               ):
@@ -705,7 +717,7 @@ class CODARFE():
         path_out = '/'.join(self.__path_to_metadata.split('/')[:-1])+'/'
         print(f"The prediction will be written at: {path_out}")
 
-    new = self.__read_new_data(path2newdata)
+    new = self.__read_new_data(path2newdata,flag_first_col_as_index)
     newindex = new.index
 
     if self.__correlation_list == {}:
@@ -1174,17 +1186,21 @@ def getArguments():
     print('-d --Data: The name of the counting table data file.')
     print('-m --Metadata: The name of the target\'s metadata file.')
     print('-t --Target: The name of the metadata column that the Target variable corresponds to.')
+    print('-idd --IndexData: Flag indicating if the index appears as the first column in the data file (default = True).')
+    print('-idm --IndexMetaData: Flag indicating if the index appears as the first column in the Metadata file (default = True).')
     print('-o --Output: The FOLDER\'s path, where ALL files will be saved. Default = metadata\'s folder')
     print('-na --NameAppend: To add a name to the model and results filenames. Default = None')
     print('-p --Predict: The name of the data file containing new samples that the model will predict.')
     print('\t-po --PredictionOutput: The path that is used when writing the prediction. Default = metadata\'s folder')
     print('\t-pna --PredictionNameAppend: The name that is added at the end of the predictions filename. Default = None')
     print('\t-pra --ApplyRAforPrediction: Apply the transformation for relative abundance to the new samples. (Set as False/f/F if your data is already in relative abundance). Default = True')
+    print("\t-pidd --PredictIndexData: Flag indicating if the index appears as the first column in the new data file (default = True).")
     print('-l --LoadInstance: The name of the instance file for an existing CODARFE model (.foda file)')
     print('\tSince it is saved in the Instance file, it is not necessary to use -d, -m, or -t when using -l.')
     print('\n---------- MODEL PARAMETERS ----------\n')
     print('-rlv --RemoveLowVar: Apply the low variance columns elimination. (For small datasets (less than 300 columns), set as False/f/F). Default = True')
     print('-ra --RelativeAbundance: Apply the transformation for relative abundance. (Set as False/f/F if your data is already in relative abundance). Default = True')
+    print('-athv --AllowTransformHighVariation: Flag to allow the target transformation in case it has a high variance (default = True).')
     print('-cr --PercentageColsToRemove: The number of columns to eliminate in each RFE iteration (for example, use 1 for 1%). Default = 1')
     print('-nf --NumberOfFolds: In the Cross-validation step, the number of folds. Default = 10')
     print('-hb --HuberRegression: The Huber regression\'s maximum number of iterations. Default = 100')
@@ -1307,6 +1323,34 @@ def checkArguments(argdic):
     else:
       argdic['-ra'] = tfdict[argdic['-ra']]
   
+  if '-idd' in argsList:
+    if argdic['-idd'] not in tfdict.keys():
+      print('-idd MUST be one of: [True, T, t, False, F, f]')
+      sys.exit(1)
+    else:
+      argdic['-idd'] = tfdict[argdic['-idd']]
+  
+  if '-pidd' in argsList:
+    if argdic['-pidd'] not in tfdict.keys():
+      print('-pidd MUST be one of: [True, T, t, False, F, f]')
+      sys.exit(1)
+    else:
+      argdic['-pidd'] = tfdict[argdic['-pidd']]
+  
+  if '-idm' in argsList:
+    if argdic['-idm'] not in tfdict.keys():
+      print('-idm MUST be one of: [True, T, t, False, F, f]')
+      sys.exit(1)
+    else:
+      argdic['-idm'] = tfdict[argdic['-idm']]
+  
+  if '-athv' in argsList:
+    if argdic['-athv'] not in tfdict.keys():
+      print('-athv MUST be one of: [True, T, t, False, F, f]')
+      sys.exit(1)
+    else:
+      argdic['-athv'] = tfdict[argdic['-athv']]
+  
   if '-pra' in argsList:
     if argdic['-pra'] not in tfdict.keys():
       print('-pra MUST be one of: [True, T, t, False, F, f]')
@@ -1325,7 +1369,7 @@ def checkArguments(argdic):
 
 
 def reduceArgs(argdict):  
-  reducerule = {'--Help':'-h','--Data':'-d','--Metadata':'-m','--Target':'-t','--Output':'-o','--Predict':'-p','--LoadInstance':'-l','--RemoveLowVar':'-rlv','--RelativeAbundance':'-ra','--R2weight':'-r2','--ProbFweight':'-pf','--RMSEweight':'-rmse','--BICweight':'-bic','--PlotCorrelation':'-pc','--PlotHoldOut':'-ho','--HoldOutRepetitions':'-horep','--HoldOutTestSize':'-hots','--PlotHeatMap':'-hm','--PlotRelevantPredictors':'-rp','--RelevantPredictorMaximum':'-rpmax','--PercentageColsToRemove':'-cr','--NumberOfFolds':'-nf','--ApplyRAforPrediction':'-pra','--PredictionOutput':'-po','--NameAppend':'-na','--PredictionNameAppend':'-pna','--PlotCorrelationNameAppend':'-pcna','--HoldOutNameAppend':'-hona','--PlotHeatMapNameAppend':'-hmna','--RelevantPredictorNameAppend':'-rpna','--NumberOfThreads':'-nt','--PlotRelevantPredictorsPathOut':'-rpo','--PlotHeatMapPathOut':'-hmo','--PlotHoldOutPathOut':'-hoo','--PlotCorrelationPathOut':'-pco'}
+  reducerule = {'--Help':'-h','--Data':'-d','--Metadata':'-m','--Target':'-t','--Output':'-o','--Predict':'-p','--LoadInstance':'-l','--RemoveLowVar':'-rlv','--RelativeAbundance':'-ra','--R2weight':'-r2','--ProbFweight':'-pf','--RMSEweight':'-rmse','--BICweight':'-bic','--PlotCorrelation':'-pc','--PlotHoldOut':'-ho','--HoldOutRepetitions':'-horep','--HoldOutTestSize':'-hots','--PlotHeatMap':'-hm','--PlotRelevantPredictors':'-rp','--RelevantPredictorMaximum':'-rpmax','--PercentageColsToRemove':'-cr','--NumberOfFolds':'-nf','--ApplyRAforPrediction':'-pra','--PredictionOutput':'-po','--NameAppend':'-na','--PredictionNameAppend':'-pna','--PlotCorrelationNameAppend':'-pcna','--HoldOutNameAppend':'-hona','--PlotHeatMapNameAppend':'-hmna','--RelevantPredictorNameAppend':'-rpna','--NumberOfThreads':'-nt','--PlotRelevantPredictorsPathOut':'-rpo','--PlotHeatMapPathOut':'-hmo','--PlotHoldOutPathOut':'-hoo','--PlotCorrelationPathOut':'-pco',"--AllowTransformHighVariation":"-athv","--IndexMetaData":"-idm","--IndexData":"-idd","--PredictIndexData":"-pidd"}
   reduced = {}
   for key in argdict.keys():
     if key in reducerule.keys():
@@ -1361,7 +1405,9 @@ def dotheRest(argsList ,argdict , path_out):
   else:
     coda = CODARFE(path_to_data=argdict['-d'],
                    path_to_metadata=argdict['-m'],
-                   target=argdict['-t'])
+                   target=argdict['-t'],
+                   flag_first_col_as_index_data = argdict['-idd'] if '-idd' in list(argdict.keys()) else True,
+                   flag_first_col_as_index_metaData = argdict['-idm'] if '-idm' in list(argdict.keys()) else True)
   
   if type(coda.selected_taxa) == type(None):
     print('\n\nCREATING MODEL\n')
@@ -1370,6 +1416,7 @@ def dotheRest(argsList ,argdict , path_out):
     name_append = argdict['-na'] if '-na' in list(argdict.keys()) else ''
     rLowVar =argdict['-rlv'] if '-rlv' in list(argdict.keys()) else True
     applyAbunRel = argdict['-ra'] if '-ra' in list(argdict.keys()) else True
+    allow_transform_high_variation = argdict['-athv'] if '-athv' in list(argdict.keys()) else True
     percentage_cols_2_remove = argdict['-cr'] if '-cr' in list(argdict.keys()) else 1
     n_Kfold_CV=argdict['-nf'] if '-nf' in list(argdict.keys()) else 10
     weightR2 =argdict['-r2'] if '-r2' in list(argdict.keys()) else 1.0
@@ -1383,6 +1430,7 @@ def dotheRest(argsList ,argdict , path_out):
                     name_append = name_append,
                     rLowVar = rLowVar,
                     applyAbunRel = applyAbunRel,
+                    allow_transform_high_variation = allow_transform_high_variation,
                     percentage_cols_2_remove = percentage_cols_2_remove,
                     n_Kfold_CV = n_Kfold_CV,
                     weightR2 = weightR2,
@@ -1401,6 +1449,7 @@ def dotheRest(argsList ,argdict , path_out):
     coda.predict(path2newdata = argdict['-p'] if '-p' in list(argdict.keys()) else '',
                 applyAbunRel = argdict['-pra'] if '-pra' in list(argdict.keys()) else True,
                 writeResults = True,
+                flag_first_col_as_index = argdict['-pidd'] if '-pidd' in list(argdict.keys()) else True,
                 path_out = argdict['-po'] if '-po' in list(argdict.keys()) else '',
                 name_append = argdict['-pna'] if '-pna' in list(argdict.keys()) else ''
                 )
