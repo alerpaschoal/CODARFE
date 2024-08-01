@@ -38,12 +38,15 @@ python3 CODARFE_scrit.py -l <CODARFE_instance.foda> -p <path_2_new_samples>
 * **-d --Data**: The name of the counting table data file.
 * **-m --Metadata**: The name of the target\'s metadata file.
 * **-t --Target**: The name of the metadata column that the Target variable corresponds to.
+* **-idd --IndexData**: Flag indicating if the index appears as the first column in the data file. Default = True
+* **-idm --IndexMetaData**: Flag indicating if the index appears as the first column in the Metadata file. Default = True
 * **-o --Output**: The FOLDER\'s path, where ALL files will be saved. Default = metadata\'s folder
 * **-na --NameAppend**: To add a name to the model and results filenames. Default = None
 * **-p --Predict**: The name of the data file containing new samples that the model will predict.
   * **-po --PredictionOutput**: The path that is used when writing the prediction. Default = metadata\'s folder
   * **-pna --PredictionNameAppend**: The name that is added at the end of the predictions filename. Default = None
   * **-pra --ApplyRAforPrediction**: Apply the transformation for relative abundance to the new samples. (Set as False/f/F if your data is already in relative abundance). Default = True
+  * **-pidd --PredictIndexData**: Flag indicating if the index appears as the first column in the new data file. Default = True
 * **-l --LoadInstance**: The name of the instance file for an existing CODARFE model (.foda file)
   * Since it is saved in the Instance file, it is not necessary to use -d, -m, or -t when using -l.
 
