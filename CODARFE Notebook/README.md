@@ -152,6 +152,7 @@ All you need to do is to call the predict function and pass to it the path to th
 coda.predict(path2newdata = <path_to_new_data>,
              applyAbunRel = True,
              writeResults = True,
+             flag_first_col_as_index = <use_first_col_as_index_for_data_table>,
              path_out     = <path_out>
              name_append  = <name>)
 ```
@@ -163,5 +164,6 @@ coda.predict(path2newdata = <path_to_new_data>,
        - .qza (qiime2 format compact)
 * *applyAbunRel:* Flag to apply relative abundance transformation
 * *writeResults:* Flag to write the results
+* *flag_first_col_as_index:* Flag indicating if the index appears as the first column in the new data file
 * *path_out:* Filename of the output. If no filename is provided it will save in the *same directory as the metadata* with the name of  'Prediction.csv'
 * *name_append:* Name to concatenate in the final filename. (Use it to differentiate predictions from the same model)
