@@ -119,3 +119,8 @@ BibTeX:
 By using **CODARFE**, you agree to cite the above-mentioned article in any publication, presentation, or other work that makes use of this tool. Proper citation helps us to track the impact and usage of our work, and supports the continued development and maintenance of the tool.
 
 Thank you for your cooperation and support.
+
+## License
+
+This project is licensed under the Apache License 2.0. See the [LICENSE](./LICENSE) file for more details.
+
