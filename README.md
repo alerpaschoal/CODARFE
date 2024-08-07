@@ -58,11 +58,12 @@ Codarfe needs only **3 inputs**:
   * Do not apply the relative abundance transformation if your database is already in relative abundance.
       - The python version used was 'Python 3.10.12' 
 
-## It cames with 4 formats  for distinc uses
+## It cames with 5 formats  for distinc uses
   * CODARFE for Windows users
   * CODARFE notebook (google colab format)
   * CODARFE class for pipeline integration
   * CODARFE python script for CMD call
+  * CODARFE on [MGnify](https://shiny-portal.embl.de/shinyapps/app/06_mgnify-notebook-lab?jlpath=mgnify-examples/home.ipynb)
 
 ### which format should I use?
 
@@ -70,6 +71,7 @@ Codarfe needs only **3 inputs**:
 * If you know the basics of programming and is used to jupyter environment or google colaboratory environment use “CODARFE Notebook”. (Can be used directly in Google colaboratory).
 * If you want to incorporate CODARFE into your own pipeline by using a single class and its functionalities, use the "CODARFE class".
 * If you want to utilize CODARFE in a CMD call, use the "CODARFE python script for CMD call". Check the tutorial inside the folder "CODARFE python script for CMD call" for the commands instructions.
+* If you want to analyze projects available on MGnify, use the Mgnify version for quick access and download of any project available on MGnify for version 4.1 or 5.
 
 Inside each folder you will find a tutorial with examples of how to run CODARFE.
 
