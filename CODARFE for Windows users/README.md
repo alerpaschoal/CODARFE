@@ -24,70 +24,74 @@ The Windows operating system was used in the development of this version of CODA
 
 * First Clik on *Create new model* button.
 
-![1](https://github.com/MuriloCaminotto/CODARFE/assets/92797211/4b1ddf7f-9ef1-4767-b15c-5c67d6690e35)
 
-* Select a database. The database is the file containing the counting table, which may be a 16-second count of bacteria or other counting data.
+![1](https://github.com/user-attachments/assets/d988bc7d-6431-40e0-8e0b-ff7150359dbe)
+
+* Select a database. The database is the file containing the counting table, which may be a 16s count of bacteria or other counting data.
   
-![2](https://github.com/MuriloCaminotto/CODARFE/assets/92797211/65f63dfe-9429-4ede-8c89-a57ae1eb4e12)
+![2](https://github.com/user-attachments/assets/0f6fa053-ff82-48a4-9ca2-84ce9a3db30a)
+
 
 * Browse to where the data is.
 
-![3](https://github.com/MuriloCaminotto/CODARFE/assets/92797211/56e90ea8-c712-4311-88b7-b27a278d27ef)
+![3](https://github.com/user-attachments/assets/5ebb07ca-5ece-49a9-ab24-dec4c37d9dea)
+
 
 * Select the database. It can be in biom, qza, csv or tsv formats.
 
-![4](https://github.com/MuriloCaminotto/CODARFE/assets/92797211/54b05cd1-3589-442d-9773-895e3ec76b24)
+![4](https://github.com/user-attachments/assets/d27528fc-820e-4df7-8fe7-c3442898738c)
+
 
 * You might need to choose the column that corresponds to the sample's id if the data are in csv or tsv file format.
 * Simply choose the column from the dropdown menu to accomplish this.
 
-![5](https://github.com/MuriloCaminotto/CODARFE/assets/92797211/6cf42117-4b36-4c4b-b8c7-118399e67e1d)
+
+![5](https://github.com/user-attachments/assets/3b94946d-55df-464b-8eaf-a0e2d9e8a91b)
 
 * Select the Metadata. Is the table with the variable you want to associate with the count table.
 
-![6](https://github.com/MuriloCaminotto/CODARFE/assets/92797211/31075e46-5855-4f4c-88dd-ce2d180076e8)
+![6](https://github.com/user-attachments/assets/546c4e0d-7161-4977-ac8a-f79892da95a3)
+
 
 * Browse to where the metadata is.
 
-![7](https://github.com/MuriloCaminotto/CODARFE/assets/92797211/bda8f337-c788-451e-b693-2ce2ed147763)
+![7](https://github.com/user-attachments/assets/da999a57-5abd-4a6e-93b5-de750bdeaa63)
 
 * The metadata can be in csv or tsv formats only.
 
-![8](https://github.com/MuriloCaminotto/CODARFE/assets/92797211/a49715fa-a93f-47bd-8e3f-7b018ea2e113)
+![8](https://github.com/user-attachments/assets/03d9245f-207c-4765-9455-019e33f6e7b2)
 
 * The column that corresponds to the sample's id must be chosen.
 * Additionally, you need to choose the column that holds the variable (target) you want to associate.
 
-![9](https://github.com/MuriloCaminotto/CODARFE/assets/92797211/035c5d44-7c76-42eb-b6ba-1da3ae93deed)
+![9](https://github.com/user-attachments/assets/967a5143-20a0-4cae-a1be-1e0aa7d3e931)
 
 * After making sure the sample's ID and target are correct, press the *next* button.
 
-![10](https://github.com/MuriloCaminotto/CODARFE/assets/92797211/000e7760-137e-4c19-b4dc-23aeea41f117)
+![10](https://github.com/user-attachments/assets/3af924d3-20f8-4dc6-a4d2-4e3b9c83f694)
 
 * You can select *Change configurations* to alter the default settings.
 
-![11](https://github.com/MuriloCaminotto/CODARFE/assets/92797211/59a9bf85-33dd-4e72-bbe1-300f399e36da)
+![11](https://github.com/user-attachments/assets/7a0af47e-de15-4b7b-8ff3-cb26bf584c49)
 
 * Click the "save" button after making any desired changes to the setup. The model configuration will change.
 
-![12](https://github.com/MuriloCaminotto/CODARFE/assets/92797211/9ad3d1c4-0820-4e7c-9130-8cf7857b8bbb)
+![12](https://github.com/user-attachments/assets/f0eca987-b20a-4775-b6a6-57cc21989a07)
 
 * Simply select the "Create Model" option to begin.
 
-![11-5](https://github.com/MuriloCaminotto/CODARFE/assets/92797211/840634d0-dcda-445a-8fd0-1e04ddbc2e30)
-
+![11-2](https://github.com/user-attachments/assets/fa314430-868c-41f9-8ab0-55658c3a805d)
 * Set the results location and model filename appropriately.
 
-![13](https://github.com/MuriloCaminotto/CODARFE/assets/92797211/3d9195ac-c8a6-4831-9182-0bf92a454f25)
+![13](https://github.com/user-attachments/assets/5daec915-a92a-493c-b50c-c9651a9db0f8)
 
 * Await its conclusion.
 
-![14](https://github.com/MuriloCaminotto/CODARFE/assets/92797211/548f35fb-dfc7-4312-99b9-5804372ea8f3)
+![14](https://github.com/user-attachments/assets/d79cec6c-8dd9-4f58-8a53-aab8bec1c1f7)
 
-* The CODARFE results as well as ways to make some graphs can be found on the final scream.
-* Every file was created using the distinction you selected.
+* The CODARFE results can be found on the final scream.
 
-![15](https://github.com/MuriloCaminotto/CODARFE/assets/92797211/dcb04211-8636-4f03-97ff-26146f11437b)
+![15](https://github.com/user-attachments/assets/8a83d91d-d53c-4ebe-8718-cdfed422abc5)
 
 ## Ploting the results
 
@@ -96,11 +100,11 @@ The Windows operating system was used in the development of this version of CODA
 * The correlation between the real and the model's learned data is displayed in this graphic.
 * To download just click on the *Download* button.
   
-![1](https://github.com/MuriloCaminotto/CODARFE/assets/92797211/1872c5a4-5776-4a0b-a316-c31f82dfd747)
+![1](https://github.com/user-attachments/assets/065d5ee5-c3ef-4ed7-9c15-ecbc4135d623)
 
 * Select your preferred setup and click the "Save" button.
 
-![2](https://github.com/MuriloCaminotto/CODARFE/assets/92797211/76fc46bf-9b3a-414e-afb6-e53cce6160da)
+![2](https://github.com/user-attachments/assets/c5546066-245f-4cee-b9c7-516f0b6ea0f7)
 
 ### Hold Out Validation Plot
 
@@ -110,25 +114,26 @@ The Windows operating system was used in the development of this version of CODA
 * Select *Plot* after selecting all of the parameters.
 
   
-![3](https://github.com/MuriloCaminotto/CODARFE/assets/92797211/ea439bf2-867f-4503-a98e-5f905cfa9e71)
+![3](https://github.com/user-attachments/assets/bd8cceec-ef6d-47c3-8225-6b35aed4f615)
 
 * Await its conclusion.
 
-![4](https://github.com/MuriloCaminotto/CODARFE/assets/92797211/ee49af1e-e356-4402-a269-7eaf8f5e6aed)
+![4](https://github.com/user-attachments/assets/59d7d93c-2a23-41c9-b875-c7a816cbbca0)
 
 * To download just click on the *Download* button.
 
-![5](https://github.com/MuriloCaminotto/CODARFE/assets/92797211/538e05f8-f4f0-4cce-a9a9-61f76b149d3b)
+![5](https://github.com/user-attachments/assets/869b2d65-eae5-448f-8b92-64640e1ff22d)
 
 * Select your preferred setup and click the "Save" button.
 
-![6](https://github.com/MuriloCaminotto/CODARFE/assets/92797211/9ec29a74-601e-45b5-8810-98bb4a4a98a8)
+![6](https://github.com/user-attachments/assets/2489f6ca-ddf0-4308-be7b-1655ddd7c121)
 
 ### Heat map Plot
 
 * The *heat-map* is usually too large to be displayed on the screen, so it can only be saved to a file.
 * Select your preferred setup and click the "Save" button.
-![7](https://github.com/MuriloCaminotto/CODARFE/assets/92797211/cfb0a4ac-2a94-4c8c-a7e5-0684018af04f)
+
+![7](https://github.com/user-attachments/assets/66b46ff7-60e3-4582-af0d-f66e2cc0a314)
 
 ### Relevant predictors Plot
 
@@ -136,54 +141,51 @@ The Windows operating system was used in the development of this version of CODA
 * Using the *Maximum predictors to show* space, choose how many predictors will be presented.
 
 
-![8](https://github.com/MuriloCaminotto/CODARFE/assets/92797211/720f3b20-4fa2-47d6-aeba-a6658b570fbb)
+![8](https://github.com/user-attachments/assets/914dc400-89e3-4d0f-8658-372a361d7ee3)
 
 * To download just click on the *Download* button.
 
-![9](https://github.com/MuriloCaminotto/CODARFE/assets/92797211/884f6b4b-2135-49cd-839e-09e8aa11947a)
+![9](https://github.com/user-attachments/assets/eedac0a5-a6f2-4361-abee-c462ee0d191f)
 
 * Select your preferred setup and click the "Save" button.
 
-![10](https://github.com/MuriloCaminotto/CODARFE/assets/92797211/fd9d7355-5464-40dc-a4bb-6c85846e4727)
-
-
+![10](https://github.com/user-attachments/assets/bbb34d30-5802-4746-a068-b18417180685)
 
 ## Predicting new samples
 
 * Select the *Predict new samples* button on the final screen.
 
-![1](https://github.com/MuriloCaminotto/CODARFE/assets/92797211/3e4c6e6d-c1a5-44e6-9bf5-207beb38a90e)
+![1](https://github.com/user-attachments/assets/6c94fc05-8d2e-44d3-a5d8-4bfdecde5aaa)
 
 * Browse in and select the new samples database.
 
-![2](https://github.com/MuriloCaminotto/CODARFE/assets/92797211/d48bedc5-6f91-42df-afd1-664e7850fb9c)
+![2](https://github.com/user-attachments/assets/997d4701-2e30-4ca2-8896-9bdec9e83caa)
 
 * If the data are in csv or tsv file format, you may need to select the column that matches the sample's id.
 * To do this, just select the column from the dropdown option.
 * The file will then be saved together with the model (*.foda) file after you click the "Save" button.
 
-![3](https://github.com/MuriloCaminotto/CODARFE/assets/92797211/86157b2b-792d-4dde-8820-e6e28e11a810)
 
+![3](https://github.com/user-attachments/assets/71141477-84c7-454f-b31a-31fb6449979e)
 
 ## Loading existing model
 
 * Select the *Upload model* button in the opening scream.
 
-![1](https://github.com/MuriloCaminotto/CODARFE/assets/92797211/9cdee727-fe3b-44e6-b1ed-34c77e28b908)
+![1](https://github.com/user-attachments/assets/0beb4204-45a5-4786-99c7-ac62df47b332)
 
 * Navigate to the model file (*.foda).
 
-![2](https://github.com/MuriloCaminotto/CODARFE/assets/92797211/3dc47517-4d49-4b04-b47f-1baa8755b73e)
+![2](https://github.com/user-attachments/assets/dd2e8711-4f4a-4731-96da-7246c67ef219)
 
 * The model (*.foda) file you want to open should be selected.
 * Select the "Open" button.
 
 
-![3](https://github.com/MuriloCaminotto/CODARFE/assets/92797211/64d16e9a-ff38-4f48-982d-22064fa286f6)
+![3](https://github.com/user-attachments/assets/ff00c21a-388f-4e0e-ad25-18a17f75185f)
 
 * The model's results will be loaded when the final scream appears.
 
-![4](https://github.com/MuriloCaminotto/CODARFE/assets/92797211/de684126-8b51-424d-b29a-c460cc968a93)
-
+![4](https://github.com/user-attachments/assets/7bc9cdb9-02d4-4b51-b3e8-65daf6752d97)
 
 
