@@ -954,8 +954,10 @@ class CODARFE():
         found = False # Flag that defines if a substitute was found
         for correlated_2_selected in self.__correlation_list[selected]: #For each taxa
           if correlated_2_selected['taxa'] in new.columns: # if a substitute was found
-            data2predict[selected] = new[correlated_2_selected['taxa']] # replace the missing one
-            found = True # Set flag
+            replacing = new[correlated_2_selected['taxa']] # Coloca ele no lugar do que n existe
+            data2predict[selected] = replacing
+            found = True # Seta flag
+            print(f"Taxa {selected} was replaced by {replacing}")
             break
         if not found:
           data2predict[selected] = 0 # if could not find one, retorn zero
