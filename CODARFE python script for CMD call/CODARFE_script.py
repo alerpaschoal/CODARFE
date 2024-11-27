@@ -736,8 +736,10 @@ class CODARFE():
         found = False # Flag que indica se encontrou substitudo
         for correlated_2_selected in self.__correlation_list[selected]: # Para cada taxa correlacionada com a que não existe
           if correlated_2_selected['taxa'] in new.columns: # Caso encontre um substituto
-            data2predict[selected] = new[correlated_2_selected['taxa']] # Coloca ele no lugar do que n existe
+            replacing = new[correlated_2_selected['taxa']] # Coloca ele no lugar do que n existe
+            data2predict[selected] = replacing
             found = True # Seta flag
+            print(f"Taxa {selected} was replaced by {replacing}")
             break
         if not found:
           data2predict[selected] = 0 # Caso não encontra retorna zero
