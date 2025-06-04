@@ -65,7 +65,7 @@ Codarfe needs only **3 inputs**:
   * CODARFE python script for CMD call
   * CODARFE on [MGnify](https://shiny-portal.embl.de/shinyapps/app/06_mgnify-notebook-lab?jlpath=mgnify-examples/home.ipynb)
 
-### which format should I use?
+### Which format should I use?
 
 * If you just want an easy and fast use of the tool in an windows environment without the need to code a single line, try “CODARFE for Windows”. It is a graphical interface for the CODARFE tool.
 * If you know the basics of programming and is used to jupyter environment or google colaboratory environment use “CODARFE Notebook”. (Can be used directly in Google colaboratory).
@@ -87,7 +87,7 @@ If you got the error about the data generalization or the $R^2$ is too low or th
 If after testing all the possibilities above the model is still yielding bad results, check if your target is appropriate for the tool. For example, if your target is between 0 and 1, it means that it is not appropriate for the methods used in this tool, and in this specific case, you may want to try applying a **logit** to your target **before** using the tool.
 
 # Bugs and errors?
-Because most of the packages are constantly updated, it is possible that it could affect the tool versions for non-Windows users. If you find any bugs or strange behavior, please report it to us through the email: murilobarbosa@alunos.utfpr.edu.br  
+Because most of the packages are constantly updated, it is possible that it could affect the tool versions for non-Windows users. If you find any bugs or strange behavior, please report it to us through the email: murilobarbosa@alunos.utfpr.edu.br & paschoal@utfpr.edu.br 
 
 # Citation Requirement for Using CODARFE
 
