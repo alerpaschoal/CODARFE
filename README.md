@@ -62,7 +62,7 @@ Codarfe needs only **3 inputs**:
   * For prediction, additional samples SHOULD be gathered in the same manner as the data used for training (for further information, read the Results and Discussion sections from the original article)
   * We recommend not using the “low variance removal” (“r_low_var = TRUE”) for databases with a small number of predictors (e.g., less than 500).
   * Do not apply the relative abundance transformation if your database is already in relative abundance.
-      - The python version used was 'Python 3.10.12' 
+  * The python version used was 'Python 3.10.12' 
 
 ## It cames with 5 formats  for distinc uses
   * CODARFE for Windows users
