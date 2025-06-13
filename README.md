@@ -48,7 +48,13 @@ Codarfe needs only **3 inputs**:
   - Rooted Mean Squared Error (RMSE) in a 10-fold cross-validation (configurable)
   - $\rho_{value}$ of the selected predictors (< 0.5 means they are significant)
   - Score: The minmax-sum of the previous ones
-   
+
+## How to use
+  * Select a version from the list of available versions
+  * The data in the DATA EXAMPLE folder can be used as input or as a model for your own data.
+  * Follow to the instructions in the selected folder version.
+  
+
 ## Some limitations and considerations:
   * The data MUST be compositional (e.g. count table).
   * The target variable MUST be continuous.
